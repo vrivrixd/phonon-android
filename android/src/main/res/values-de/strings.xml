@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="engine_status">Status der Sprachausgabe</string>
+    <string name="status_loading">Sprachmodell wird geladen…</string>
+    <string name="status_extracting">Modell wird für die erste Verwendung vorbereitet: %1$s</string>
+    <string name="status_failed">Das Modell konnte nicht geladen werden: %1$s</string>
+    <string name="status_ready">Bereit. Modell in %1$s Sekunden geladen. Bibliothek: %2$s.</string>
+    <string name="library_fast">optimiert (ARMv8.2)</string>
+    <string name="library_compat">kompatibel</string>
+    <string name="engine_starting">Die Sprachausgabe startet noch. Versuche es in ein paar Sekunden erneut.</string>
+
+    <string name="default_voices">Standardstimme für jede Sprache</string>
+    <string name="default_voices_help">Wird verwendet, wenn eine App (zum Beispiel TalkBack) keine bestimmte Stimme wählt.</string>
+    <string name="character_voice">Figur</string>
+    <string name="listen_default">Standardstimme anhören: %1$s</string>
+
+    <string name="speech">Sprache</string>
+    <string name="speed_boost">Zusätzliche Geschwindigkeit (multipliziert die Sprechgeschwindigkeit des Systems)</string>
+    <string name="expressiveness">Ausdrucksstärke (Temperatur)</string>
+    <string name="temp_0">Keine: jedes Mal die gleiche Lesung (0)</string>
+    <string name="temp_02">Sehr niedrig (0,2)</string>
+    <string name="temp_04">Niedrig (0,4)</string>
+    <string name="temp_06">Mittel (0,6)</string>
+    <string name="temp_default">Hoch, Standard des Modells (0,8)</string>
+    <string name="trim_silence">Stille vor dem Sprechen entfernen (schnellere Reaktion)</string>
+
+    <string name="performance">Leistung</string>
+    <string name="threads">Verwendete Prozessorkerne (dieses Gerät hat %1$d)</string>
+    <string name="restart_message">Die Sprachausgabe muss für diese Änderung neu starten. Es kann ein paar Sekunden dauern, bis sie wieder spricht.</string>
+    <string name="restart_now">Jetzt neu starten</string>
+    <string name="later">Später</string>
+
+    <string name="system">System</string>
+    <string name="open_tts_settings">Android-Einstellungen für Sprachausgabe öffnen</string>
+
+    <string name="about">Info</string>
+    <string name="about_text">Phonon für Android, Version %1$s. Phonon-Engine von Gradium (gradium-ai/xn-ptts, MIT oder Apache 2.0), basierend auf Pocket TTS und Mimi von Kyutai. Modell phonon-40m-multilingual von Gradium, Lizenz CC BY-NC 4.0: nur nicht kommerzielle Nutzung. Stimmen aus dem Katalog gradium/phonon-voices, Apache 2.0. Geschwindigkeit und Tonhöhe über Sonic von Bill Cox, Apache 2.0. Unabhängiges Projekt ohne Verbindung zu Gradium. Die gesamte Sprache wird auf dem Gerät erzeugt, ohne Internet.</string>
+</resources>

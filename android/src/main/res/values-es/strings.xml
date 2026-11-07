@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="engine_status">Estado del motor</string>
+    <string name="status_loading">Cargando el modelo de voz…</string>
+    <string name="status_extracting">Preparando el modelo para el primer uso: %1$s</string>
+    <string name="status_failed">No se pudo cargar el modelo: %1$s</string>
+    <string name="status_ready">Listo. Modelo cargado en %1$s segundos. Biblioteca: %2$s.</string>
+    <string name="library_fast">optimizada (ARMv8.2)</string>
+    <string name="library_compat">compatible</string>
+    <string name="engine_starting">El motor todavía se está iniciando. Inténtalo de nuevo en unos segundos.</string>
+
+    <string name="default_voices">Voz predeterminada de cada idioma</string>
+    <string name="default_voices_help">Se usa cuando una aplicación (por ejemplo, TalkBack) no elige una voz concreta.</string>
+    <string name="character_voice">personaje</string>
+    <string name="listen_default">Escuchar la voz predeterminada: %1$s</string>
+
+    <string name="speech">Habla</string>
+    <string name="speed_boost">Velocidad extra (multiplica la velocidad del sistema)</string>
+    <string name="expressiveness">Expresividad (temperatura)</string>
+    <string name="temp_0">Ninguna: la misma lectura siempre (0)</string>
+    <string name="temp_02">Muy baja (0,2)</string>
+    <string name="temp_04">Baja (0,4)</string>
+    <string name="temp_06">Media (0,6)</string>
+    <string name="temp_default">Alta, la predeterminada del modelo (0,8)</string>
+    <string name="trim_silence">Cortar el silencio antes del habla (respuesta más rápida)</string>
+
+    <string name="performance">Rendimiento</string>
+    <string name="threads">Núcleos del procesador usados (este dispositivo tiene %1$d)</string>
+    <string name="restart_message">El motor debe reiniciarse para aplicar el cambio. El habla puede tardar unos segundos en volver.</string>
+    <string name="restart_now">Reiniciar ahora</string>
+    <string name="later">Más tarde</string>
+
+    <string name="system">Sistema</string>
+    <string name="open_tts_settings">Abrir los ajustes de texto a voz de Android</string>
+
+    <string name="about">Acerca de</string>
+    <string name="about_text">Phonon para Android, versión %1$s. Motor Phonon de Gradium (gradium-ai/xn-ptts, MIT o Apache 2.0), basado en Pocket TTS y Mimi de Kyutai. Modelo phonon-40m-multilingual de Gradium, licencia CC BY-NC 4.0: solo uso no comercial. Voces del catálogo gradium/phonon-voices, Apache 2.0. Velocidad y tono mediante Sonic, de Bill Cox, Apache 2.0. Proyecto independiente, sin relación con Gradium. Toda el habla se genera en el dispositivo, sin internet.</string>
+</resources>

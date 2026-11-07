@@ -25,6 +25,13 @@ class PhononService : TextToSpeechService() {
         Model.load(this)
     }
 
+    // Android unbinds the engine when no app uses it any more, such as after another engine is
+    // chosen: give the model's memory back then.
+    override fun onDestroy() {
+        Model.unload()
+        super.onDestroy()
+    }
+
     override fun onIsLanguageAvailable(lang: String?, country: String?, variant: String?): Int {
         val code = Voices.code(lang) ?: return TextToSpeech.LANG_NOT_SUPPORTED
         val c = Voices.country(country)

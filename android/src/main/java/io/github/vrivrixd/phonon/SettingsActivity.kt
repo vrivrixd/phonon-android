@@ -19,13 +19,10 @@ import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TextView
 import java.util.Locale
-import kotlin.concurrent.thread
-import kotlin.math.abs
 
 /** The engine's settings, built from plain widgets so TalkBack reads them all. */
 class SettingsActivity : Activity() {
     private lateinit var status: TextView
-    private lateinit var measureResult: TextView
     private lateinit var column: LinearLayout
     private var tts: TextToSpeech? = null
     private var ttsReady = false
@@ -79,13 +76,6 @@ class SettingsActivity : Activity() {
                 askRestart()
             }
         }
-        checkbox(R.string.quantize_mimi, Prefs.quantizeMimi(this)) {
-            Prefs.setQuantizeMimi(this, it)
-            askRestart()
-        }
-        button(getString(R.string.measure)) { measure() }
-        measureResult = text("")
-        measureResult.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
 
         heading(R.string.system)
         button(getString(R.string.open_tts_settings)) { startActivity(Intent("com.android.settings.TTS_SETTINGS")) }
@@ -127,62 +117,6 @@ class SettingsActivity : Activity() {
             .setNegativeButton(R.string.later, null)
             .show()
     }
-
-    /**
-     * Time a short sentence straight through the runtime, as the service would speak it: the
-     * runtime's own time to first audio, and when the first audible sample came out.
-     */
-    private fun measure() {
-        val model = (Model.state as? Model.State.Ready)?.tts
-        if (model == null) {
-            measureResult.text = getString(R.string.engine_starting)
-            return
-        }
-        measureResult.text = getString(R.string.measuring)
-        val deviceLang = Locale.getDefault().language
-        val lang = if (deviceLang in Voices.LANGUAGES) deviceLang else "en"
-        val voice = Voices.defaultFor(this, lang, Locale.getDefault().country) ?: return
-        val text = getString(R.string.measure_text)
-        val temperature = Prefs.temperature(this).let { if (it >= 0f) it else PhononService.MODEL_TEMPERATURE }
-        thread(name = "Phonon measure") {
-            val result = try {
-                val runs = 5
-                val ttfa = mutableListOf<Double>()
-                val audible = mutableListOf<Double>()
-                var audioSeconds = 0.0
-                var computeSeconds = 0.0
-                repeat(runs + 1) { run ->
-                    val start = System.nanoTime()
-                    var heard = -1.0
-                    val r = synchronized(model) {
-                        model.setLanguage(voice.lang)
-                        model.setVoice(voice.name)
-                        model.setTemperature(temperature)
-                        model.speak(text) { pcm ->
-                            if (heard < 0 && pcm.any { abs(it) > 0.004f }) heard = (System.nanoTime() - start) / 1e6
-                            true
-                        }
-                    }
-                    // The first run warms caches up and is left out.
-                    if (run > 0) {
-                        ttfa += r.ttfaMs
-                        audible += if (heard >= 0) heard else r.ttfaMs
-                        audioSeconds += r.samples / AudioPipeline.SAMPLE_RATE.toDouble()
-                        computeSeconds += r.totalMs / 1000.0
-                    }
-                }
-                getString(
-                    R.string.measure_result, median(ttfa).toInt(), median(audible).toInt(), runs,
-                    fmt((audioSeconds / computeSeconds).toFloat()),
-                )
-            } catch (e: Exception) {
-                getString(R.string.measure_failed, e.message ?: e.toString())
-            }
-            runOnUiThread { measureResult.text = result }
-        }
-    }
-
-    private fun median(values: List<Double>) = values.sorted()[values.size / 2]
 
     private fun voiceRow(lang: String) {
         val display = Locale.getDefault()

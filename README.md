@@ -12,8 +12,10 @@ with **TalkBack** and every app that speaks through Android's text-to-speech API
   speed multiplier.
 - Speech stops instantly when interrupted, leading silence is trimmed, and each language has a
   selectable default voice.
-- Built-in response-time measurement, and an optional faster (q8_0) audio decoder.
-- The interface is in English, with a Portuguese translation.
+- The interface follows the phone's language: English, Portuguese, Spanish, French or German
+  (the languages Phonon speaks).
+- When no app uses the engine any more (for example after choosing another engine), the model is
+  unloaded to give its memory back.
 - Needs Android 7 or later on a 64-bit ARM processor. The APK carries two builds of the native
   library, an optimized one (ARMv8.2, nearly every phone since 2019) and a compatible one, and
   picks one automatically.
@@ -31,14 +33,14 @@ with **TalkBack** and every app that speaks through Android's text-to-speech API
 Everything runs in GitHub Actions (`.github/workflows/build.yml`):
 
 1. Checks out Gradium's runtime, [gradium-ai/xn-ptts](https://github.com/gradium-ai/xn-ptts),
-   at a pinned commit, and applies the small patches in `patches/`.
+   at a pinned commit, and applies any patches in `patches/`.
 2. Downloads the model and voice pack, kept as an asset of this repository's `model-pack`
    release (it is too large for git).
 3. Quantizes the weights to q8_0 (smaller and faster on phones) and checks that synthesis works.
 4. Builds `libptts_ffi.so` for arm64 with Rust and the Android NDK, in both variants.
 5. Builds and signs the APK with Gradle.
 
-Every push to `main` produces an APK as a workflow artifact. A `v*` tag (for example `v0.2.0`)
+Every push to `main` produces an APK as a workflow artifact. A `v*` tag (for example `v0.3.0`)
 publishes a release with the APK, using `release-notes/<tag>.md` as its description when present.
 
 Signing uses the `KEYSTORE_B64`, `KEYSTORE_PASSWORD` and `KEY_ALIAS` secrets. Without them the

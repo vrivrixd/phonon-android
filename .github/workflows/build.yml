@@ -37,10 +37,11 @@ jobs:
           path: upstream
 
       # .cargo/config.toml pins target-cpu=native, which would make cached host tools crash on a
-      # runner with another CPU (xn-ptts's own CI removes it too). Then this app's small patches.
+      # runner with another CPU (xn-ptts's own CI removes it too). Then any patches in patches/.
       - name: Prepare the runtime
         run: |
           rm -f upstream/.cargo/config.toml
+          shopt -s nullglob
           for p in patches/*.patch; do git -C upstream apply --verbose "$GITHUB_WORKSPACE/$p"; done
 
       - uses: dtolnay/rust-toolchain@stable
@@ -89,8 +90,6 @@ jobs:
             $PTTS -m pack/q8 --quant q8_0 --device cpu -t 0.8 --lang pt -v "$v" -o "$OUT/q8-$v.wav" "$PT" || ok_q8=1
           done
           $PTTS -m pack/q8 --quant q8_0 --device cpu -t 0.8 --lang en -v Freya -o "$OUT/q8-Freya.wav" "$EN" || ok_q8=1
-          $PTTS -m pack/q8 --quant q8_0 --quantize-mimi --device cpu -t 0.8 --lang pt -v Davi -o "$OUT/q8-mimi8.wav" "$PT" \
-            || echo "::warning::the q8_0 Mimi decoder failed on the host; the app's option may not work"
           $PTTS -m pack/st --device cpu -t 0.8 --lang pt -v Davi -o "$OUT/f32-Davi.wav" "$PT" || ok_st=1
           ls -la "$OUT"; rm -rf "$OUT"
           if [ $ok_q8 = 0 ]; then echo "weights=q8" >> "$GITHUB_OUTPUT";
@@ -141,12 +140,12 @@ jobs:
           else export APP_VERSION_NAME="0.0.${GITHUB_RUN_NUMBER}-dev"; fi
           gradle -p android --no-daemon assembleRelease
           mkdir -p out
-          cp android/build/outputs/apk/release/*.apk "out/phonon-android-${APP_VERSION_NAME}.apk"
+          cp android/build/outputs/apk/release/*.apk "out/phonon-${APP_VERSION_NAME}.apk"
           ls -la out
 
       - uses: actions/upload-artifact@v4
         with:
-          name: phonon-android-apk
+          name: phonon-apk
           path: out/*.apk
           compression-level: 0
 

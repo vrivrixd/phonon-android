@@ -46,8 +46,6 @@ object Model {
                 state = State.Loading
                 // Read once by the runtime's thread pool, before the first load.
                 Os.setenv("RAYON_NUM_THREADS", Prefs.threads(app).toString(), true)
-                // Read by this app's patch to the runtime (patches/ffi-quantize-mimi.patch).
-                Os.setenv("PTTS_QUANTIZE_MIMI", if (Prefs.quantizeMimi(app)) "1" else "0", true)
                 val tts = PhononTTS(dir(app).path, "pt")
                 State.Ready(tts, (System.nanoTime() - start) / 1e9)
             } catch (t: Throwable) {
@@ -56,6 +54,19 @@ object Model {
             }
         }
         return pending
+    }
+
+    /**
+     * Free the loaded model (its memory; the runtime's worker threads are already asleep when
+     * nothing is spoken). Runs on the loader thread after any load in progress, and waits for an
+     * utterance using the model to finish. The next [load] or [await] loads it again.
+     */
+    @Synchronized
+    fun unload() {
+        val ready = state as? State.Ready
+        state = State.Idle
+        pending = null
+        if (ready != null) loader.execute { synchronized(ready.tts) { ready.tts.close() } }
     }
 
     /** The loaded model, waiting up to [timeoutS] for a load in progress. */
