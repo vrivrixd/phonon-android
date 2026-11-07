@@ -3,6 +3,7 @@ package io.github.vrivrixd.phonon
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.os.Process
 import android.speech.tts.TextToSpeech
@@ -18,15 +19,17 @@ import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TextView
 import java.util.Locale
+import kotlin.concurrent.thread
+import kotlin.math.abs
 
-/** The engine's settings, in Portuguese, built from plain widgets so TalkBack reads them all. */
+/** The engine's settings, built from plain widgets so TalkBack reads them all. */
 class SettingsActivity : Activity() {
     private lateinit var status: TextView
+    private lateinit var measureResult: TextView
     private lateinit var column: LinearLayout
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     private var pad = 0
-    private val ptBR = Locale("pt", "BR")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,64 +40,58 @@ class SettingsActivity : Activity() {
         }
         setContentView(ScrollView(this).apply { fitsSystemWindows = true; addView(column) })
 
-        heading("Estado do motor")
+        heading(R.string.engine_status)
         status = text("")
         status.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
 
-        heading("Voz padrão de cada idioma")
-        text("Usada quando o aplicativo (por exemplo, o TalkBack) não escolhe uma voz específica.")
+        heading(R.string.default_voices)
+        text(getString(R.string.default_voices_help))
         for (lang in Voices.LANGUAGES) voiceRow(lang)
 
-        heading("Fala")
+        heading(R.string.speech)
         val boosts = listOf(1.0f, 1.25f, 1.5f, 1.75f, 2.0f, 2.5f, 3.0f)
         choice(
-            "Velocidade extra (multiplica a velocidade do sistema)", boosts.map { "${fmt(it)}x" },
+            getString(R.string.speed_boost), boosts.map { "${fmt(it)}x" },
             boosts.indexOfFirst { it == Prefs.speedBoost(this) }.coerceAtLeast(0),
         ) { Prefs.setSpeedBoost(this, boosts[it]) }
 
-        val temps = listOf(-1f, 0.6f, 0.4f, 0.2f, 0f)
-        val tempLabels = listOf("Padrão do modelo (mais expressiva)", "Moderada", "Estável", "Muito estável", "Sem variação")
+        // From the least expressive to the most; -1 is the model's own default (0.8).
+        val temps = listOf(0f, 0.2f, 0.4f, 0.6f, -1f)
+        val tempLabels = listOf(R.string.temp_0, R.string.temp_02, R.string.temp_04, R.string.temp_06, R.string.temp_default)
+            .map { getString(it) }
+        val savedTemp = Prefs.temperature(this)
         choice(
-            "Variação da voz", tempLabels,
-            temps.indexOfFirst { it == Prefs.temperature(this) }.coerceAtLeast(0),
+            getString(R.string.expressiveness), tempLabels,
+            temps.indexOfFirst { it == savedTemp }.takeIf { it >= 0 } ?: temps.lastIndex,
         ) { Prefs.setTemperature(this, temps[it]) }
 
-        CheckBox(this).apply {
-            text = "Cortar o silêncio antes da fala (resposta mais rápida)"
-            isChecked = Prefs.trimSilence(this@SettingsActivity)
-            setOnCheckedChangeListener { _, on -> Prefs.setTrimSilence(this@SettingsActivity, on) }
-            column.addView(this, MATCH_PARENT, WRAP_CONTENT)
-        }
+        checkbox(R.string.trim_silence, Prefs.trimSilence(this)) { Prefs.setTrimSilence(this, it) }
 
-        heading("Desempenho")
+        heading(R.string.performance)
         val cores = Runtime.getRuntime().availableProcessors()
         val threads = (1..minOf(8, cores)).toList()
         choice(
-            "Núcleos do processador usados (o aparelho tem $cores)", threads.map { it.toString() },
+            getString(R.string.threads, cores), threads.map { it.toString() },
             threads.indexOf(Prefs.threads(this)).coerceAtLeast(0),
         ) { i ->
-            val value = threads[i]
-            if (value != Prefs.threads(this)) {
-                Prefs.setThreads(this, value)
-                AlertDialog.Builder(this)
-                    .setMessage("O motor precisa reiniciar para usar $value núcleos. A fala pode demorar alguns segundos para voltar.")
-                    .setPositiveButton("Reiniciar agora") { _, _ -> Process.killProcess(Process.myPid()) }
-                    .setNegativeButton("Depois", null)
-                    .show()
+            if (threads[i] != Prefs.threads(this)) {
+                Prefs.setThreads(this, threads[i])
+                askRestart()
             }
         }
+        checkbox(R.string.quantize_mimi, Prefs.quantizeMimi(this)) {
+            Prefs.setQuantizeMimi(this, it)
+            askRestart()
+        }
+        button(getString(R.string.measure)) { measure() }
+        measureResult = text("")
+        measureResult.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
 
-        heading("Sistema")
-        button("Abrir configurações de voz do Android") { startActivity(Intent("com.android.settings.TTS_SETTINGS")) }
+        heading(R.string.system)
+        button(getString(R.string.open_tts_settings)) { startActivity(Intent("com.android.settings.TTS_SETTINGS")) }
 
-        heading("Sobre")
-        text(
-            "Phonon para Android, versão ${packageManager.getPackageInfo(packageName, 0).versionName}. " +
-                "Motor Phonon da Gradium (gradium-ai/xn-ptts, MIT ou Apache 2.0), baseado no Pocket TTS e no Mimi da Kyutai. " +
-                "Modelo phonon-40m-multilingual da Gradium, licença CC BY-NC 4.0, somente uso não comercial. " +
-                "Vozes do catálogo gradium/phonon-voices, Apache 2.0. Velocidade e tom pelo Sonic, de Bill Cox, Apache 2.0. " +
-                "Projeto independente, não oficial da Gradium. Toda a fala é gerada no aparelho, sem internet.",
-        )
+        heading(R.string.about)
+        text(getString(R.string.about_text, packageManager.getPackageInfo(packageName, 0).versionName))
 
         Model.load(this)
         tts = TextToSpeech(this, { ttsReady = it == TextToSpeech.SUCCESS }, packageName)
@@ -112,31 +109,98 @@ class SettingsActivity : Activity() {
 
     private fun refresh() {
         status.text = when (val s = Model.state) {
-            is Model.State.Idle, is Model.State.Loading -> "Carregando o modelo de voz..."
-            is Model.State.Extracting -> "Preparando o modelo no primeiro uso: ${s.file}"
-            is Model.State.Failed -> "Erro ao carregar o modelo: ${s.message}"
-            is Model.State.Ready -> "Pronto. Modelo carregado em ${fmt(s.seconds.toFloat())} segundos. " +
-                "Biblioteca: ${if (PhononTTS.variant == "ptts_ffi") "otimizada (ARMv8.2)" else "compatível"}."
+            is Model.State.Idle, is Model.State.Loading -> getString(R.string.status_loading)
+            is Model.State.Extracting -> getString(R.string.status_extracting, s.file)
+            is Model.State.Failed -> getString(R.string.status_failed, s.message)
+            is Model.State.Ready -> getString(
+                R.string.status_ready, fmt(s.seconds.toFloat()),
+                getString(if (PhononTTS.variant == "ptts_ffi") R.string.library_fast else R.string.library_compat),
+            )
         }
         if (Model.state !is Model.State.Ready && Model.state !is Model.State.Failed) status.postDelayed(::refresh, 700)
     }
 
+    private fun askRestart() {
+        AlertDialog.Builder(this)
+            .setMessage(R.string.restart_message)
+            .setPositiveButton(R.string.restart_now) { _, _ -> Process.killProcess(Process.myPid()) }
+            .setNegativeButton(R.string.later, null)
+            .show()
+    }
+
+    /**
+     * Time a short sentence straight through the runtime, as the service would speak it: the
+     * runtime's own time to first audio, and when the first audible sample came out.
+     */
+    private fun measure() {
+        val model = (Model.state as? Model.State.Ready)?.tts
+        if (model == null) {
+            measureResult.text = getString(R.string.engine_starting)
+            return
+        }
+        measureResult.text = getString(R.string.measuring)
+        val deviceLang = Locale.getDefault().language
+        val lang = if (deviceLang in Voices.LANGUAGES) deviceLang else "en"
+        val voice = Voices.defaultFor(this, lang, Locale.getDefault().country) ?: return
+        val text = getString(R.string.measure_text)
+        val temperature = Prefs.temperature(this).let { if (it >= 0f) it else PhononService.MODEL_TEMPERATURE }
+        thread(name = "Phonon measure") {
+            val result = try {
+                val runs = 5
+                val ttfa = mutableListOf<Double>()
+                val audible = mutableListOf<Double>()
+                var audioSeconds = 0.0
+                var computeSeconds = 0.0
+                repeat(runs + 1) { run ->
+                    val start = System.nanoTime()
+                    var heard = -1.0
+                    val r = synchronized(model) {
+                        model.setLanguage(voice.lang)
+                        model.setVoice(voice.name)
+                        model.setTemperature(temperature)
+                        model.speak(text) { pcm ->
+                            if (heard < 0 && pcm.any { abs(it) > 0.004f }) heard = (System.nanoTime() - start) / 1e6
+                            true
+                        }
+                    }
+                    // The first run warms caches up and is left out.
+                    if (run > 0) {
+                        ttfa += r.ttfaMs
+                        audible += if (heard >= 0) heard else r.ttfaMs
+                        audioSeconds += r.samples / AudioPipeline.SAMPLE_RATE.toDouble()
+                        computeSeconds += r.totalMs / 1000.0
+                    }
+                }
+                getString(
+                    R.string.measure_result, median(ttfa).toInt(), median(audible).toInt(), runs,
+                    fmt((audioSeconds / computeSeconds).toFloat()),
+                )
+            } catch (e: Exception) {
+                getString(R.string.measure_failed, e.message ?: e.toString())
+            }
+            runOnUiThread { measureResult.text = result }
+        }
+    }
+
+    private fun median(values: List<Double>) = values.sorted()[values.size / 2]
+
     private fun voiceRow(lang: String) {
+        val display = Locale.getDefault()
         val voices = Voices.forLanguage(this, lang)
         val current = Voices.defaultFor(this, lang, "")
         val labels = voices.map { v ->
-            val region = if (v.character) "personagem" else v.locale.getDisplayCountry(ptBR)
+            val region = if (v.character) getString(R.string.character_voice) else v.locale.getDisplayCountry(display)
             "${v.name} ($region)"
         }
-        val langName = Locale(lang).getDisplayLanguage(ptBR).replaceFirstChar { it.titlecase(ptBR) }
+        val langName = Locale(lang).getDisplayLanguage(display).replaceFirstChar { it.titlecase(display) }
         choice(langName, labels, voices.indexOf(current).coerceAtLeast(0)) { Prefs.setDefaultVoice(this, lang, voices[it].name) }
-        button("Ouvir voz padrão: $langName") { speakSample(lang) }
+        button(getString(R.string.listen_default, langName)) { speakSample(lang) }
     }
 
     private fun speakSample(lang: String) {
         val engine = tts
         if (engine == null || !ttsReady) {
-            status.text = "O motor ainda está iniciando. Tente de novo em alguns segundos."
+            status.text = getString(R.string.engine_starting)
             return
         }
         val voice = Voices.defaultFor(this, lang, "") ?: return
@@ -145,11 +209,11 @@ class SettingsActivity : Activity() {
         engine.speak(sample, TextToSpeech.QUEUE_FLUSH, null, "sample")
     }
 
-    private fun heading(label: String) = TextView(this).apply {
-        text = label
+    private fun heading(label: Int) = TextView(this).apply {
+        setText(label)
         textSize = 20f
         setPadding(0, pad, 0, pad / 2)
-        if (android.os.Build.VERSION.SDK_INT >= 28) isAccessibilityHeading = true
+        if (Build.VERSION.SDK_INT >= 28) isAccessibilityHeading = true
         column.addView(this, MATCH_PARENT, WRAP_CONTENT)
     }
 
@@ -162,6 +226,13 @@ class SettingsActivity : Activity() {
     private fun button(label: String, action: () -> Unit) = Button(this).apply {
         text = label
         setOnClickListener { action() }
+        column.addView(this, MATCH_PARENT, WRAP_CONTENT)
+    }
+
+    private fun checkbox(label: Int, checked: Boolean, onChange: (Boolean) -> Unit) = CheckBox(this).apply {
+        setText(label)
+        isChecked = checked
+        setOnCheckedChangeListener { _, on -> onChange(on) }
         column.addView(this, MATCH_PARENT, WRAP_CONTENT)
     }
 
@@ -182,7 +253,7 @@ class SettingsActivity : Activity() {
     }
 
     private fun fmt(v: Float): String {
-        val s = String.format(ptBR, "%.2f", v)
-        return s.trimEnd('0').trimEnd(',')
+        val s = String.format(Locale.getDefault(), "%.2f", v)
+        return s.trimEnd('0').trimEnd(',', '.')
     }
 }

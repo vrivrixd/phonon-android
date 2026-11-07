@@ -21,7 +21,6 @@ env:
   # The model and voices, kept as an asset of a release in this repo (too big for git).
   MODEL_PACK_TAG: model-pack
   MODEL_PACK_ASSET: phonon-40m-multilingual-pack.zip
-  SAMPLE_TEXT_PT: "Olá! Esta é a voz do Phonon, funcionando direto no Android. Hoje são seis de novembro."
 
 jobs:
   apk:
@@ -37,10 +36,12 @@ jobs:
           ref: ${{ env.UPSTREAM_REF }}
           path: upstream
 
-      # It pins target-cpu=native, which would make cached host tools crash on a runner with
-      # another CPU (xn-ptts's own CI removes it too).
-      - name: Remove the runtime's local cargo config
-        run: rm -f upstream/.cargo/config.toml
+      # .cargo/config.toml pins target-cpu=native, which would make cached host tools crash on a
+      # runner with another CPU (xn-ptts's own CI removes it too). Then this app's small patches.
+      - name: Prepare the runtime
+        run: |
+          rm -f upstream/.cargo/config.toml
+          for p in patches/*.patch; do git -C upstream apply --verbose "$GITHUB_WORKSPACE/$p"; done
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -61,7 +62,6 @@ jobs:
         run: |
           gh release download "$MODEL_PACK_TAG" -R "$GITHUB_REPOSITORY" -p "$MODEL_PACK_ASSET" -D pack
           unzip -q "pack/$MODEL_PACK_ASSET" -d pack/full
-          ls -la pack/full pack/full/voices | head -20
 
       - name: Build the host tools (quantizer and ptts command line)
         working-directory: upstream
@@ -72,6 +72,7 @@ jobs:
           upstream/target/release/examples/quantize pack/full/model.safetensors pack/model.q8.gguf --quant q8_0 --no-mimi-encoder | tail -3
           ls -la pack/model.q8.gguf
 
+      # Synthesis is checked here; the audio stays on the runner and is never published.
       - name: Smoke test both weight formats and pick one
         id: weights
         run: |
@@ -79,23 +80,22 @@ jobs:
           mk() { mkdir -p "$1"; cp pack/full/config.json pack/full/tokenizer.json "$1/"; cp -r pack/full/voices "$1/"; }
           mk pack/q8; cp pack/model.q8.gguf pack/q8/
           mk pack/st; cp pack/full/model.safetensors pack/st/
-          mkdir -p samples
+          OUT="$RUNNER_TEMP/smoke"; mkdir -p "$OUT"
           PTTS=upstream/target/release/ptts
+          PT="Olá! Este é um teste rápido do motor de voz."
+          EN="Hello, this is a quick test of the speech engine."
           ok_q8=0; ok_st=0
-          for v in Davi Rafaela Isadora Marcelo; do
-            $PTTS -m pack/q8 --quant q8_0 --device cpu -t 0.8 --lang pt -v "$v" -o "samples/q8-$v.wav" "$SAMPLE_TEXT_PT" || ok_q8=1
+          for v in Davi Rafaela; do
+            $PTTS -m pack/q8 --quant q8_0 --device cpu -t 0.8 --lang pt -v "$v" -o "$OUT/q8-$v.wav" "$PT" || ok_q8=1
           done
-          $PTTS -m pack/q8 --quant q8_0 --device cpu -t 0.8 --lang en -v Freya -o samples/q8-Freya.wav "Hello, this is the quantized model on its way to Android." || ok_q8=1
-          $PTTS -m pack/st --device cpu -t 0.8 --lang pt -v Davi -o samples/f32-Davi.wav "$SAMPLE_TEXT_PT" || ok_st=1
-          ls -la samples
+          $PTTS -m pack/q8 --quant q8_0 --device cpu -t 0.8 --lang en -v Freya -o "$OUT/q8-Freya.wav" "$EN" || ok_q8=1
+          $PTTS -m pack/q8 --quant q8_0 --quantize-mimi --device cpu -t 0.8 --lang pt -v Davi -o "$OUT/q8-mimi8.wav" "$PT" \
+            || echo "::warning::the q8_0 Mimi decoder failed on the host; the app's option may not work"
+          $PTTS -m pack/st --device cpu -t 0.8 --lang pt -v Davi -o "$OUT/f32-Davi.wav" "$PT" || ok_st=1
+          ls -la "$OUT"; rm -rf "$OUT"
           if [ $ok_q8 = 0 ]; then echo "weights=q8" >> "$GITHUB_OUTPUT";
           elif [ $ok_st = 0 ]; then echo "weights=st" >> "$GITHUB_OUTPUT"; echo "::warning::q8 failed, shipping safetensors";
           else echo "::error::neither weight format synthesizes"; exit 1; fi
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: amostras-de-voz
-          path: samples/
 
       - name: Build the Android native library
         run: |
@@ -155,6 +155,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" out/*.apk samples/*.wav -R "$GITHUB_REPOSITORY" \
-            --title "Phonon para Android $GITHUB_REF_NAME" \
-            --notes "Baixe o arquivo .apk abaixo e instale no celular. Os arquivos .wav são amostras geradas durante a compilação."
+          NOTES="release-notes/${GITHUB_REF_NAME}.md"
+          [ -f "$NOTES" ] || { echo "Download the .apk below and install it on your phone." > "$RUNNER_TEMP/notes.md"; NOTES="$RUNNER_TEMP/notes.md"; }
+          gh release create "$GITHUB_REF_NAME" out/*.apk -R "$GITHUB_REPOSITORY" \
+            --title "Phonon for Android $GITHUB_REF_NAME" --notes-file "$NOTES"

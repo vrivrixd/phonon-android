@@ -46,6 +46,8 @@ object Model {
                 state = State.Loading
                 // Read once by the runtime's thread pool, before the first load.
                 Os.setenv("RAYON_NUM_THREADS", Prefs.threads(app).toString(), true)
+                // Read by this app's patch to the runtime (patches/ffi-quantize-mimi.patch).
+                Os.setenv("PTTS_QUANTIZE_MIMI", if (Prefs.quantizeMimi(app)) "1" else "0", true)
                 val tts = PhononTTS(dir(app).path, "pt")
                 State.Ready(tts, (System.nanoTime() - start) / 1e9)
             } catch (t: Throwable) {

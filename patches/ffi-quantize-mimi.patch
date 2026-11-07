@@ -1,0 +1,15 @@
+diff --git a/ptts-ffi/src/cpu.rs b/ptts-ffi/src/cpu.rs
+index d250337..72dd961 100644
+--- a/ptts-ffi/src/cpu.rs
++++ b/ptts-ffi/src/cpu.rs
+@@ -50,7 +50,9 @@ impl Engine {
+         let mut builder = SynthBuilder::new(cfg, weights, Normalize::OFF)
+             .tokenizer_file(dir.join("tokenizer.json"))
+             .device(DeviceKind::Cpu)
+-            .quant(quant);
++            .quant(quant)
++            // Phonon for Android: opt-in q8_0 Mimi decoder, read once when the model loads.
++            .quantize_mimi(std::env::var_os("PTTS_QUANTIZE_MIMI").is_some_and(|v| v == "1"));
+         for (name, path) in ptts::loader::checkpoint_voices(dir) {
+             builder = builder.add_voice(name, path);
+         }

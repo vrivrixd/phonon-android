@@ -134,8 +134,8 @@ class PhononService : TextToSpeechService() {
         v.androidName, v.locale, Voice.QUALITY_VERY_HIGH, Voice.LATENCY_NORMAL, false, emptySet(),
     )
 
-    private companion object {
-        const val TAG = "PhononService"
+    companion object {
+        private const val TAG = "PhononService"
 
         /** The model's own sampling temperature, from its config.json ("temp"). */
         const val MODEL_TEMPERATURE = 0.8f

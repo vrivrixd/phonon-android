@@ -53,8 +53,11 @@ class PhononTTS(modelDir: String, lang: String) : AutoCloseable {
     fun setLanguage(lang: String) = check(lib.ptts_set_language(open(), lang))
     fun setTemperature(temperature: Float) = check(lib.ptts_set_temperature(open(), temperature))
 
-    /** Speak [text], handing [onAudio] 24 kHz mono floats as they are made; false stops. */
-    fun speak(text: String, onAudio: (FloatArray) -> Boolean) {
+    /**
+     * Speak [text], handing [onAudio] 24 kHz mono floats as they are made; false stops. Returns
+     * the utterance's timings, including the time to first audio.
+     */
+    fun speak(text: String, onAudio: (FloatArray) -> Boolean): Result {
         this.onAudio = onAudio
         thrown = null
         val out = Result()
@@ -64,6 +67,7 @@ class PhononTTS(modelDir: String, lang: String) : AutoCloseable {
             throw it
         }
         check(ok)
+        return out
     }
 
     override fun close() {

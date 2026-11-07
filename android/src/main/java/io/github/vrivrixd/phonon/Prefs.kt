@@ -28,5 +28,9 @@ object Prefs {
     fun threads(context: Context): Int = prefs(context).getInt("threads", defaultThreads())
     fun setThreads(context: Context, value: Int) = prefs(context).edit().putInt("threads", value).commit()
 
+    /** Whether the runtime runs the Mimi decoder in q8_0. Read once, when the model loads. */
+    fun quantizeMimi(context: Context): Boolean = prefs(context).getBoolean("quantize_mimi", false)
+    fun setQuantizeMimi(context: Context, value: Boolean) = prefs(context).edit().putBoolean("quantize_mimi", value).commit()
+
     fun defaultThreads(): Int = if (Runtime.getRuntime().availableProcessors() >= 8) 4 else 2
 }

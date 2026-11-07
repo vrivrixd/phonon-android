@@ -1,4 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Phonon</string>
+    <string name="app_name" translatable="false">Phonon</string>
+
+    <string name="engine_status">Engine status</string>
+    <string name="status_loading">Loading the voice model…</string>
+    <string name="status_extracting">Preparing the model for first use: %1$s</string>
+    <string name="status_failed">Could not load the model: %1$s</string>
+    <string name="status_ready">Ready. Model loaded in %1$s seconds. Library: %2$s.</string>
+    <string name="library_fast">optimized (ARMv8.2)</string>
+    <string name="library_compat">compatible</string>
+    <string name="engine_starting">The engine is still starting. Try again in a few seconds.</string>
+
+    <string name="default_voices">Default voice for each language</string>
+    <string name="default_voices_help">Used when an app (TalkBack, for example) does not pick a specific voice.</string>
+    <string name="character_voice">character</string>
+    <string name="listen_default">Listen to default voice: %1$s</string>
+
+    <string name="speech">Speech</string>
+    <string name="speed_boost">Extra speed (multiplies the system speech rate)</string>
+    <string name="expressiveness">Expressiveness (sampling temperature)</string>
+    <string name="temp_0">None: the same reading every time (0)</string>
+    <string name="temp_02">Very low (0.2)</string>
+    <string name="temp_04">Low (0.4)</string>
+    <string name="temp_06">Medium (0.6)</string>
+    <string name="temp_default">High, the model\'s default (0.8)</string>
+    <string name="trim_silence">Cut the silence before speech (faster response)</string>
+
+    <string name="performance">Performance</string>
+    <string name="threads">Processor cores used (this device has %1$d)</string>
+    <string name="quantize_mimi">Faster audio decoder (experimental, slightly lower audio quality)</string>
+    <string name="restart_message">The engine must restart for this change. Speech may take a few seconds to come back.</string>
+    <string name="restart_now">Restart now</string>
+    <string name="later">Later</string>
+    <string name="measure">Measure response time</string>
+    <string name="measuring">Measuring…</string>
+    <string name="measure_result">First audio after %1$d ms; first audible sound after %2$d ms (median of %3$d runs). Speech is generated %4$s times faster than real time.</string>
+    <string name="measure_failed">Measurement failed: %1$s</string>
+    <string name="measure_text">This is a short sentence to measure the response time.</string>
+
+    <string name="system">System</string>
+    <string name="open_tts_settings">Open Android text-to-speech settings</string>
+
+    <string name="about">About</string>
+    <string name="about_text">Phonon for Android, version %1$s. Phonon engine by Gradium (gradium-ai/xn-ptts, MIT or Apache 2.0), based on Kyutai\'s Pocket TTS and Mimi. Gradium phonon-40m-multilingual model, CC BY-NC 4.0 license: non-commercial use only. Voices from the gradium/phonon-voices catalog, Apache 2.0. Speed and pitch by Sonic, by Bill Cox, Apache 2.0. Independent project, not affiliated with Gradium. All speech is generated on the device, without internet.</string>
 </resources>
