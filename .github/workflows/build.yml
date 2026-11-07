@@ -1,0 +1,160 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  # Gradium's Phonon runtime, pinned to the commit this app was written against.
+  UPSTREAM_REPO: gradium-ai/xn-ptts
+  UPSTREAM_REF: e5110afd3ead725c940b6411eec4985fb8b111aa
+  # The model and voices, kept as an asset of a release in this repo (too big for git).
+  MODEL_PACK_TAG: model-pack
+  MODEL_PACK_ASSET: phonon-40m-multilingual-pack.zip
+  SAMPLE_TEXT_PT: "Olá! Esta é a voz do Phonon, funcionando direto no Android. Hoje são seis de novembro."
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check out the Phonon runtime
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.UPSTREAM_REPO }}
+          ref: ${{ env.UPSTREAM_REF }}
+          path: upstream
+
+      # It pins target-cpu=native, which would make cached host tools crash on a runner with
+      # another CPU (xn-ptts's own CI removes it too).
+      - name: Remove the runtime's local cargo config
+        run: rm -f upstream/.cargo/config.toml
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: upstream -> target
+          cache-all-crates: true
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-ndk
+
+      - name: Download the model pack
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$MODEL_PACK_TAG" -R "$GITHUB_REPOSITORY" -p "$MODEL_PACK_ASSET" -D pack
+          unzip -q "pack/$MODEL_PACK_ASSET" -d pack/full
+          ls -la pack/full pack/full/voices | head -20
+
+      - name: Build the host tools (quantizer and ptts command line)
+        working-directory: upstream
+        run: cargo build --release -p ptts --features cli --bin ptts --example quantize
+
+      - name: Quantize the weights to q8_0 for phones
+        run: |
+          upstream/target/release/examples/quantize pack/full/model.safetensors pack/model.q8.gguf --quant q8_0 --no-mimi-encoder | tail -3
+          ls -la pack/model.q8.gguf
+
+      - name: Smoke test both weight formats and pick one
+        id: weights
+        run: |
+          set +e
+          mk() { mkdir -p "$1"; cp pack/full/config.json pack/full/tokenizer.json "$1/"; cp -r pack/full/voices "$1/"; }
+          mk pack/q8; cp pack/model.q8.gguf pack/q8/
+          mk pack/st; cp pack/full/model.safetensors pack/st/
+          mkdir -p samples
+          PTTS=upstream/target/release/ptts
+          ok_q8=0; ok_st=0
+          for v in Davi Rafaela Isadora Marcelo; do
+            $PTTS -m pack/q8 --weights model.q8.gguf --device cpu -t 0.8 --lang pt -v "$v" -o "samples/q8-$v.wav" "$SAMPLE_TEXT_PT" || ok_q8=1
+          done
+          $PTTS -m pack/q8 --weights model.q8.gguf --device cpu -t 0.8 --lang en -v Freya -o samples/q8-Freya.wav "Hello, this is the quantized model on its way to Android." || ok_q8=1
+          $PTTS -m pack/st --device cpu -t 0.8 --lang pt -v Davi -o samples/f32-Davi.wav "$SAMPLE_TEXT_PT" || ok_st=1
+          ls -la samples
+          if [ $ok_q8 = 0 ]; then echo "weights=q8" >> "$GITHUB_OUTPUT";
+          elif [ $ok_st = 0 ]; then echo "weights=st" >> "$GITHUB_OUTPUT"; echo "::warning::q8 failed, shipping safetensors";
+          else echo "::error::neither weight format synthesizes"; exit 1; fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: amostras-de-voz
+          path: samples/
+
+      - name: Build the Android native library
+        run: |
+          export ANDROID_NDK_HOME="$ANDROID_NDK_LATEST_HOME"
+          bash scripts/build-native.sh upstream android/jniLibs
+
+      - name: Put the model into the APK assets
+        run: |
+          W="${{ steps.weights.outputs.weights }}"
+          D=android/model-assets/model
+          rm -rf android/model-assets; mkdir -p "$D"
+          cp -r "pack/$W/." "$D/"
+          echo "$(sha256sum "pack/$MODEL_PACK_ASSET" | cut -c1-16)-$W-${UPSTREAM_REF:0:12}" > "$D/PACK_VERSION"
+          cat "$D/PACK_VERSION"; du -sh "$D"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.13"
+
+      - name: Signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.p12"
+            echo "KEYSTORE_FILE=$RUNNER_TEMP/release.p12" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No KEYSTORE_B64 secret: the APK is signed with a throwaway debug key"
+          fi
+
+      - name: Build the APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          APP_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then export APP_VERSION_NAME="${GITHUB_REF_NAME#v}";
+          else export APP_VERSION_NAME="0.0.${GITHUB_RUN_NUMBER}-dev"; fi
+          gradle -p android --no-daemon assembleRelease
+          mkdir -p out
+          cp android/build/outputs/apk/release/*.apk "out/phonon-android-${APP_VERSION_NAME}.apk"
+          ls -la out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phonon-android-apk
+          path: out/*.apk
+          compression-level: 0
+
+      - name: Publish a release for tags
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" out/*.apk samples/*.wav -R "$GITHUB_REPOSITORY" \
+            --title "Phonon para Android $GITHUB_REF_NAME" \
+            --notes "Baixe o arquivo .apk abaixo e instale no celular. Os arquivos .wav são amostras geradas durante a compilação."

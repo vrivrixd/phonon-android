@@ -1,0 +1,7 @@
+.gradle/
+build/
+jniLibs/
+model-assets/
+local.properties
+*.keystore
+*.p12

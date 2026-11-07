@@ -1,0 +1,4 @@
+chave-de-assinatura/
+*.p12
+*.keystore
+*.pem
