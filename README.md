@@ -40,7 +40,7 @@ Everything runs in GitHub Actions (`.github/workflows/build.yml`):
 4. Builds `libptts_ffi.so` for arm64 with Rust and the Android NDK, in both variants.
 5. Builds and signs the APK with Gradle.
 
-Every push to `main` produces an APK as a workflow artifact. A `v*` tag (for example `v0.3.0`)
+Every push to `main` produces an APK as a workflow artifact. A `v*` tag (for example `v1.0.0`)
 publishes a release with the APK, using `release-notes/<tag>.md` as its description when present.
 
 Signing uses the `KEYSTORE_B64`, `KEYSTORE_PASSWORD` and `KEY_ALIAS` secrets. Without them the
