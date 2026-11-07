@@ -112,7 +112,7 @@ class PhononTTS(modelDir: String, lang: String) : AutoCloseable {
             val features = try {
                 File("/proc/cpuinfo").readLines()
                     .filter { it.startsWith("Features") }
-                    .flatMap { it.substringAfter(':').trim().split(Regex("\s+")) }
+                    .flatMap { it.substringAfter(':').trim().split(Regex("\\s+")) }
                     .toSet()
             } catch (e: Exception) {
                 emptySet()
