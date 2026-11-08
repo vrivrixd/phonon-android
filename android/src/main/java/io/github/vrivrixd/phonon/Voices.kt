@@ -17,9 +17,12 @@ object Voices {
     /** The languages the model speaks and the runtime normalizes. */
     val LANGUAGES = listOf("pt", "en", "es", "fr", "de")
 
+    /** What speaks when a language has no voices. */
+    const val FALLBACK_LANGUAGE = "en"
+
     /** [LANGUAGES] for showing: the phone's language first (else English), then English, then the rest. */
     fun languagesFor(system: String): List<String> =
-        (listOf(if (system in LANGUAGES) system else "en", "en") + LANGUAGES).distinct()
+        (listOf(if (system in LANGUAGES) system else FALLBACK_LANGUAGE, FALLBACK_LANGUAGE) + LANGUAGES).distinct()
 
     private const val DEFAULT_SUFFIX = "-x-default"
 

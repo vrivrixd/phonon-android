@@ -32,17 +32,16 @@ class EmojiTableTest {
     }
 
     @Test fun theLongestSequenceWins() {
-        assertEquals("polegar para cima pele morena", table.spell("👍🏽"))
+        assertEquals("polegar para cima: pele morena", table.spell("👍🏽"))
     }
 
     @Test fun neighboursAreSeparated() {
         assertEquals("rosto risonho polegar para cima", table.spell("😀👍"))
     }
 
-    @Test fun namesHaveNoPausesInside() {
-        val names = EmojiTable(sequenceOf("😀\tfamília: homem, mulher e menina", "👍\ttouches : #"))
-        assertEquals("família homem mulher e menina", names.spell("😀"))
-        assertEquals("touches #", names.spell("👍"))
+    @Test fun namesKeepTheirOwnPunctuation() {
+        val names = EmojiTable(sequenceOf("😀\tfamília: homem, mulher e menina"))
+        assertEquals("família: homem, mulher e menina", names.spell("😀"))
     }
 
     @Test fun variationSelectorsDoNotMatter() {

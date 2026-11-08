@@ -42,16 +42,15 @@ class EmojiTable(lines: Sequence<String>) {
             val tab = line.indexOf('\t')
             if (tab <= 0) continue
             val key = line.substring(0, tab)
-            // CLDR writes "bandeira: Brasil"; the colon and commas would be read as pauses.
-            names[key] = line.substring(tab + 1).replace(PAUSES, " ")
+            names[key] = line.substring(tab + 1)
             firstChars += key[0]
             longest = maxOf(longest, key.length)
         }
     }
 
     /**
-     * Replace each emoji, longest sequence first, by its name and no added pause, as it sits on
-     * the screen: "Oi 😀 tudo bem" becomes "Oi rosto risonho tudo bem".
+     * Replace each emoji, longest sequence first, by its name as CLDR writes it, adding no
+     * punctuation around it: "Oi 😀 tudo bem" becomes "Oi rosto risonho tudo bem".
      */
     fun spell(text: String): String {
         val source = text.replace("\uFE0F", "")
@@ -83,9 +82,5 @@ class EmojiTable(lines: Sequence<String>) {
             length--
         }
         return 0
-    }
-
-    private companion object {
-        val PAUSES = Regex("\\s*[:,]\\s*")
     }
 }

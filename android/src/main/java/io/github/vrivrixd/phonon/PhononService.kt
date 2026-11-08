@@ -18,7 +18,7 @@ import java.util.Locale
  */
 class PhononService : TextToSpeechService() {
     @Volatile private var stopped = false
-    @Volatile private var current: Array<String> = arrayOf("por", "BRA", "")
+    @Volatile private var current: Array<String> = arrayOf("eng", "", "")
 
     override fun onCreate() {
         super.onCreate()
@@ -82,7 +82,7 @@ class PhononService : TextToSpeechService() {
         val voice = Voices.byAndroidName(this, request.voiceName)
             ?.takeIf { requestLang == null || it.lang == requestLang }
             ?: requestLang?.let { Voices.defaultFor(this, it, country) }
-            ?: Voices.defaultFor(this, "pt", "BR")
+            ?: Voices.defaultFor(this, Voices.FALLBACK_LANGUAGE, "")
         if (voice == null) {
             fail(callback, TextToSpeech.ERROR_INVALID_REQUEST)
             return
