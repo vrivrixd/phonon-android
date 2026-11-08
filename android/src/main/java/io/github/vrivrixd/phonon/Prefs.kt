@@ -52,10 +52,6 @@ object Prefs {
     fun temperature(context: Context): Float = get(context, "temperature")?.toFloatOrNull() ?: -1f
     fun setTemperature(context: Context, value: Float) = set(context, "temperature", value)
 
-    /** Whether to drop the silence the model makes before speech starts. */
-    fun trimSilence(context: Context): Boolean = get(context, "trim_silence")?.toBooleanStrictOrNull() ?: true
-    fun setTrimSilence(context: Context, value: Boolean) = set(context, "trim_silence", value)
-
     /** CPU threads the runtime uses. Read once, when the engine's process loads the model. */
     fun threads(context: Context): Int = get(context, "threads")?.toIntOrNull() ?: defaultThreads()
     fun setThreads(context: Context, value: Int) = set(context, "threads", value)

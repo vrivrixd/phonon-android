@@ -105,7 +105,7 @@ class PhononService : TextToSpeechService() {
         // Android's 100 is normal for both; TalkBack's rate slider lands in speechRate.
         val speed = (request.speechRate / 100f).coerceIn(0.2f, 6f) * Prefs.speedBoost(this)
         val pitch = (request.pitch / 100f).coerceIn(0.25f, 4f)
-        val pipeline = AudioPipeline(speed, pitch, Prefs.trimSilence(this))
+        val pipeline = AudioPipeline(speed, pitch)
         val max = callback.maxBufferSize
 
         fun send(bytes: ByteArray): Boolean {

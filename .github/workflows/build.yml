@@ -3,11 +3,16 @@ name: Build APK
 on:
   push:
     branches: [main]
-    tags: ["v*"]
+  # A build with a release's version number, to test before publishing it.
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version name, such as 1.2.0 (empty for a dev build)"
+        required: false
+        type: string
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -138,9 +143,9 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           APP_VERSION_CODE: ${{ github.run_number }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then export APP_VERSION_NAME="${GITHUB_REF_NAME#v}";
-          else export APP_VERSION_NAME="0.0.${GITHUB_RUN_NUMBER}-dev"; fi
+          export APP_VERSION_NAME="${INPUT_VERSION:-0.0.${GITHUB_RUN_NUMBER}-dev}"
           gradle -p android --no-daemon assembleRelease
           mkdir -p out
           cp android/build/outputs/apk/release/*.apk "out/phonon-${APP_VERSION_NAME}.apk"
@@ -151,13 +156,3 @@ jobs:
           name: phonon-apk
           path: out/*.apk
           compression-level: 0
-
-      - name: Publish a release for tags
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          NOTES="release-notes/${GITHUB_REF_NAME}.md"
-          [ -f "$NOTES" ] || { echo "Download the .apk below and install it on your phone." > "$RUNNER_TEMP/notes.md"; NOTES="$RUNNER_TEMP/notes.md"; }
-          gh release create "$GITHUB_REF_NAME" out/*.apk -R "$GITHUB_REPOSITORY" \
-            --title "Phonon for Android $GITHUB_REF_NAME" --notes-file "$NOTES"

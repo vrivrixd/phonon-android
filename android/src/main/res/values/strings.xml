@@ -24,7 +24,7 @@
     <string name="temp_04">Low (0.4)</string>
     <string name="temp_06">Medium (0.6)</string>
     <string name="temp_default">High, the model\'s default (0.8)</string>
-    <string name="trim_silence">Cut the silence before speech (faster response)</string>
+    <string name="temp_1">Maximum (1.0)</string>
 
     <string name="performance">Performance</string>
     <string name="threads">Processor cores used (this device has %1$d)</string>

@@ -22,7 +22,7 @@
     <string name="temp_04">Baja (0,4)</string>
     <string name="temp_06">Media (0,6)</string>
     <string name="temp_default">Alta, la predeterminada del modelo (0,8)</string>
-    <string name="trim_silence">Cortar el silencio antes del habla (respuesta más rápida)</string>
+    <string name="temp_1">Máxima (1,0)</string>
 
     <string name="performance">Rendimiento</string>
     <string name="threads">Núcleos del procesador usados (este dispositivo tiene %1$d)</string>

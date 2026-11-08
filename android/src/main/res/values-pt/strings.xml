@@ -22,7 +22,7 @@
     <string name="temp_04">Baixa (0,4)</string>
     <string name="temp_06">Média (0,6)</string>
     <string name="temp_default">Alta, o padrão do modelo (0,8)</string>
-    <string name="trim_silence">Cortar o silêncio antes da fala (resposta mais rápida)</string>
+    <string name="temp_1">Máxima (1,0)</string>
 
     <string name="performance">Desempenho</string>
     <string name="threads">Núcleos do processador usados (o aparelho tem %1$d)</string>

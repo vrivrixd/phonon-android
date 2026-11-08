@@ -11,7 +11,6 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
-import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.Spinner
@@ -55,17 +54,15 @@ class SettingsActivity : Activity() {
             boosts.indexOfFirst { it == Prefs.speedBoost(this) }.coerceAtLeast(0),
         ) { Prefs.setSpeedBoost(this, boosts[it]) }
 
-        // From the least expressive to the most; -1 is the model's own default (0.8).
-        val temps = listOf(0f, 0.2f, 0.4f, 0.6f, -1f)
-        val tempLabels = listOf(R.string.temp_0, R.string.temp_02, R.string.temp_04, R.string.temp_06, R.string.temp_default)
+        // From the least expressive to the most; -1 is the model's own default (0.8), and the default here.
+        val temps = listOf(0f, 0.2f, 0.4f, 0.6f, -1f, 1f)
+        val tempLabels = listOf(R.string.temp_0, R.string.temp_02, R.string.temp_04, R.string.temp_06, R.string.temp_default, R.string.temp_1)
             .map { getString(it) }
         val savedTemp = Prefs.temperature(this)
         choice(
             getString(R.string.expressiveness), tempLabels,
-            temps.indexOfFirst { it == savedTemp }.takeIf { it >= 0 } ?: temps.lastIndex,
+            temps.indexOfFirst { it == savedTemp }.takeIf { it >= 0 } ?: temps.indexOf(-1f),
         ) { Prefs.setTemperature(this, temps[it]) }
-
-        checkbox(R.string.trim_silence, Prefs.trimSilence(this)) { Prefs.setTrimSilence(this, it) }
 
         heading(R.string.performance)
         val cores = Runtime.getRuntime().availableProcessors()
@@ -186,13 +183,6 @@ class SettingsActivity : Activity() {
     private fun button(label: String, action: () -> Unit) = Button(this).apply {
         text = label
         setOnClickListener { action() }
-        column.addView(this, MATCH_PARENT, WRAP_CONTENT)
-    }
-
-    private fun checkbox(label: Int, checked: Boolean, onChange: (Boolean) -> Unit) = CheckBox(this).apply {
-        setText(label)
-        isChecked = checked
-        setOnCheckedChangeListener { _, on -> onChange(on) }
         column.addView(this, MATCH_PARENT, WRAP_CONTENT)
     }
 

@@ -22,7 +22,7 @@
     <string name="temp_04">Niedrig (0,4)</string>
     <string name="temp_06">Mittel (0,6)</string>
     <string name="temp_default">Hoch, Standard des Modells (0,8)</string>
-    <string name="trim_silence">Stille vor dem Sprechen entfernen (schnellere Reaktion)</string>
+    <string name="temp_1">Maximal (1,0)</string>
 
     <string name="performance">Leistung</string>
     <string name="threads">Verwendete Prozessorkerne (dieses Gerät hat %1$d)</string>

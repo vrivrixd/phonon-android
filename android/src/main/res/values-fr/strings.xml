@@ -22,7 +22,7 @@
     <string name="temp_04">Faible (0,4)</string>
     <string name="temp_06">Moyenne (0,6)</string>
     <string name="temp_default">Élevée, la valeur par défaut du modèle (0,8)</string>
-    <string name="trim_silence">Couper le silence avant la parole (réponse plus rapide)</string>
+    <string name="temp_1">Maximale (1,0)</string>
 
     <string name="performance">Performances</string>
     <string name="threads">Cœurs du processeur utilisés (cet appareil en a %1$d)</string>
