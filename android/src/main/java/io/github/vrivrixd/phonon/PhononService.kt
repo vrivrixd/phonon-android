@@ -2,6 +2,7 @@ package io.github.vrivrixd.phonon
 
 import android.media.AudioFormat
 import android.os.PowerManager
+import android.os.Process
 import android.speech.tts.SynthesisCallback
 import android.speech.tts.SynthesisRequest
 import android.speech.tts.TextToSpeech
@@ -19,8 +20,11 @@ import java.util.Locale
  */
 class PhononService : TextToSpeechService() {
     @Volatile private var stopped = false
+    private val power by lazy { getSystemService(POWER_SERVICE) as PowerManager }
+    private val threads = EngineThreads()
+    @Volatile private var lead: LeadBuffer? = null
     private val wakeLock by lazy {
-        (getSystemService(POWER_SERVICE) as PowerManager)
+        power
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "phonon:synthesis")
             .apply { setReferenceCounted(false) }
     }
@@ -28,6 +32,7 @@ class PhononService : TextToSpeechService() {
 
     override fun onCreate() {
         super.onCreate()
+        ForegroundKeeper.keep(this)
         Model.load(this)
     }
 
@@ -76,6 +81,7 @@ class PhononService : TextToSpeechService() {
 
     override fun onStop() {
         stopped = true
+        lead?.cancel()
     }
 
     override fun onSynthesizeText(request: SynthesisRequest, callback: SynthesisCallback) {
@@ -123,8 +129,50 @@ class PhononService : TextToSpeechService() {
         val speed = (request.speechRate / 100f).coerceIn(0.2f, 6f) * Prefs.speedBoost(this)
         val pitch = (request.pitch / 100f).coerceIn(0.25f, 4f)
         val pipeline = AudioPipeline(speed, pitch)
-        val max = callback.maxBufferSize
+        val buffer = LeadBuffer(LEAD_CAPACITY_BYTES)
+        lead = buffer
+        if (stopped) buffer.cancel()
+        ForegroundKeeper.keep(this)
+        threads.boost()
 
+        // The model runs on its own thread, so it can work ahead of what Android will accept.
+        var failure: Throwable? = null
+        val maker = Thread({
+            Process.setThreadPriority(Process.THREAD_PRIORITY_VIDEO)
+            try {
+                var ok = true
+                synchronized(tts) {
+                    tts.setLanguage(voice.lang)
+                    tts.setVoice(voice.name)
+                    val temperature = Prefs.temperature(this)
+                    tts.setTemperature(if (temperature >= 0f) temperature else MODEL_TEMPERATURE)
+                    var first = true
+                    tts.speak(text) { pcm ->
+                        // The runtime's workers exist from the first audio on.
+                        if (first) threads.boost()
+                        first = false
+                        val bytes = pipeline.process(pcm)
+                        ok = !stopped && (bytes.isEmpty() || buffer.put(bytes))
+                        ok
+                    }
+                }
+                if (ok && !stopped) {
+                    val tail = pipeline.finish()
+                    if (tail.isNotEmpty()) buffer.put(tail)
+                }
+            } catch (t: Throwable) {
+                failure = t
+            } finally {
+                buffer.finish()
+            }
+        }, "Phonon maker")
+        maker.start()
+
+        // Refused the foreground, the engine may be too slow to keep up with the screen off. Reading
+        // has no one waiting for an instant answer, so begin with a little in hand.
+        if (!ForegroundKeeper.active && !power.isInteractive) buffer.awaitLead(PREROLL_BYTES)
+
+        val max = callback.maxBufferSize
         fun send(bytes: ByteArray): Boolean {
             var at = 0
             while (at < bytes.size) {
@@ -136,23 +184,21 @@ class PhononService : TextToSpeechService() {
             return true
         }
 
-        try {
-            var ok = true
-            synchronized(tts) {
-                tts.setLanguage(voice.lang)
-                tts.setVoice(voice.name)
-                val temperature = Prefs.temperature(this)
-                tts.setTemperature(if (temperature >= 0f) temperature else MODEL_TEMPERATURE)
-                tts.speak(text) { pcm ->
-                    ok = !stopped && send(pipeline.process(pcm))
-                    ok
-                }
+        while (true) {
+            val chunk = buffer.take() ?: break
+            if (!send(chunk)) {
+                buffer.cancel()
+                break
             }
-            if (ok && !stopped) send(pipeline.finish())
-            callback.done()
-        } catch (e: Exception) {
-            Log.e(TAG, "synthesis failed", e)
+        }
+        maker.join()
+        lead = null
+        val problem = failure
+        if (problem != null && !stopped) {
+            Log.e(TAG, "synthesis failed", problem)
             fail(callback, TextToSpeech.ERROR_SYNTHESIS)
+        } else {
+            callback.done()
         }
     }
 
@@ -168,6 +214,13 @@ class PhononService : TextToSpeechService() {
     companion object {
         private const val TAG = "PhononService"
         private const val WAKE_LOCK_LIMIT_MS = 10 * 60 * 1000L
+        private const val BYTES_PER_SECOND = AudioPipeline.SAMPLE_RATE * 2
+
+        /** How far ahead of playback the model may get. */
+        private const val LEAD_CAPACITY_BYTES = 20 * BYTES_PER_SECOND
+
+        /** Audio to have in hand before speaking, when the engine may be too slow. */
+        private const val PREROLL_BYTES = BYTES_PER_SECOND
 
         /** The model's own sampling temperature, from its config.json ("temp"). */
         const val MODEL_TEMPERATURE = 0.8f

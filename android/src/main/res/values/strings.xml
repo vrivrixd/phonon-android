@@ -42,4 +42,6 @@
     <string name="update_permission_body">Android needs your permission for Phonon to install the update. On the screen that opens, turn the permission on, then come back.</string>
     <string name="update_permission_action">Open settings</string>
     <string name="update_percent" translatable="false">%1$d%%</string>
+    <string name="speech_channel">Speech</string>
+    <string name="speech_notification">Making speech</string>
 </resources>

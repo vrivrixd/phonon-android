@@ -13,7 +13,9 @@ with **TalkBack** and every app that speaks through Android's text-to-speech API
 - Emoji are read aloud by name in all five languages.
 - When it opens, the app looks for a new version on GitHub and offers to download and install it.
   That is the only time anything goes online: speech is always made on the phone.
-- An option turns off battery optimization, for phones that slow the engine with the screen locked.
+- While in use, the engine runs as a foreground service, so Android does not hold it to the slow
+  processor cores with the screen locked. From Android 13 on this shows no notification. An option
+  turns off battery optimization, for phones that still limit the engine.
 - Changes in the app apply from the next utterance. The engine runs in its own process, so
   restarting it does not close the app.
 - Speech stops instantly when interrupted, leading silence is trimmed, and each language has a

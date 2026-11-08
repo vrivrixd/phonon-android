@@ -39,4 +39,6 @@
     <string name="update_permission_title">Permiso necesario</string>
     <string name="update_permission_body">Android necesita tu permiso para que Phonon instale la actualización. En la pantalla que se abre, activa el permiso y luego vuelve.</string>
     <string name="update_permission_action">Abrir ajustes</string>
+    <string name="speech_channel">Voz</string>
+    <string name="speech_notification">Generando la voz</string>
 </resources>
