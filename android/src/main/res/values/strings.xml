@@ -19,12 +19,8 @@
     <string name="speech">Speech</string>
     <string name="speed_boost">Extra speed (multiplies the system speech rate)</string>
     <string name="expressiveness">Expressiveness (sampling temperature)</string>
-    <string name="temp_0">None: the same reading every time (0)</string>
-    <string name="temp_02">Very low (0.2)</string>
-    <string name="temp_04">Low (0.4)</string>
-    <string name="temp_06">Medium (0.6)</string>
-    <string name="temp_default">High, the model\'s default (0.8)</string>
-    <string name="temp_1">Maximum (1.0)</string>
+    <string name="temp_default">%1$s (model default)</string>
+    <string name="temp_recommended">%1$s (recommended)</string>
 
     <string name="performance">Performance</string>
     <string name="threads">Processor cores used (this device has %1$d)</string>
@@ -33,5 +29,17 @@
     <string name="open_tts_settings">Open Android text-to-speech settings</string>
 
     <string name="about">About</string>
-    <string name="about_text">Phonon for Android, version %1$s. Phonon engine by Gradium (gradium-ai/xn-ptts, MIT or Apache 2.0), based on Kyutai\'s Pocket TTS and Mimi. Gradium phonon-40m-multilingual model, CC BY-NC 4.0 license: non-commercial use only. Voices from the gradium/phonon-voices catalog, Apache 2.0. Speed and pitch by Sonic, by Bill Cox, Apache 2.0. Independent project, not affiliated with Gradium. All speech is generated on the device, without internet. Emoji names from Unicode CLDR, Unicode License.</string>
+    <string name="about_text">Phonon for Android, version %1$s. Phonon engine by Gradium (gradium-ai/xn-ptts, MIT or Apache 2.0), based on Kyutai\'s Pocket TTS and Mimi. Gradium phonon-40m-multilingual model, CC BY-NC 4.0 license: non-commercial use only. Voices from the gradium/phonon-voices catalog, Apache 2.0. Speed and pitch by Sonic, by Bill Cox, Apache 2.0. Independent project, not affiliated with Gradium. All speech is generated on the device, without internet. Emoji names from Unicode CLDR, Unicode License. The app only goes online to look for updates on GitHub when it opens, and to download one if you agree.</string>
+
+    <string name="battery_help">If speech stutters with the screen locked, the system may be limiting the engine to save battery.</string>
+    <string name="battery_disable">Disable battery optimization for Phonon</string>
+    <string name="battery_exempt">Battery optimization is off for Phonon. Open the system list to change it</string>
+    <string name="update_title">Update available</string>
+    <string name="update_body">A new version of Phonon is available.\nYour version: %1$s\nLatest version: %2$s\nDownload size: %3$s\nDownload and install it now?</string>
+    <string name="update_download_title">Downloading update</string>
+    <string name="update_failed">The update could not be downloaded.</string>
+    <string name="update_permission_title">Permission needed</string>
+    <string name="update_permission_body">Android needs your permission for Phonon to install the update. On the screen that opens, turn the permission on, then come back.</string>
+    <string name="update_permission_action">Open settings</string>
+    <string name="update_percent" translatable="false">%1$d%%</string>
 </resources>

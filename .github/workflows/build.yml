@@ -10,12 +10,16 @@ on:
         description: "Version name, such as 1.2.0 (empty for a dev build)"
         required: false
         type: string
+      version_code:
+        description: "Version code (empty for the run number)"
+        required: false
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.version }}
   cancel-in-progress: true
 
 env:
@@ -142,7 +146,7 @@ jobs:
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          APP_VERSION_CODE: ${{ github.run_number }}
+          APP_VERSION_CODE: ${{ inputs.version_code || github.run_number }}
           INPUT_VERSION: ${{ inputs.version }}
         run: |
           export APP_VERSION_NAME="${INPUT_VERSION:-0.0.${GITHUB_RUN_NUMBER}-dev}"

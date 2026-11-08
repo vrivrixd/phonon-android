@@ -17,12 +17,8 @@
     <string name="speech">Parole</string>
     <string name="speed_boost">Vitesse supplémentaire (multiplie le débit du système)</string>
     <string name="expressiveness">Expressivité (température)</string>
-    <string name="temp_0">Aucune : la même lecture à chaque fois (0)</string>
-    <string name="temp_02">Très faible (0,2)</string>
-    <string name="temp_04">Faible (0,4)</string>
-    <string name="temp_06">Moyenne (0,6)</string>
-    <string name="temp_default">Élevée, la valeur par défaut du modèle (0,8)</string>
-    <string name="temp_1">Maximale (1,0)</string>
+    <string name="temp_default">%1$s (valeur par défaut du modèle)</string>
+    <string name="temp_recommended">%1$s (recommandé)</string>
 
     <string name="performance">Performances</string>
     <string name="threads">Cœurs du processeur utilisés (cet appareil en a %1$d)</string>
@@ -31,5 +27,16 @@
     <string name="open_tts_settings">Ouvrir les paramètres de synthèse vocale d\'Android</string>
 
     <string name="about">À propos</string>
-    <string name="about_text">Phonon pour Android, version %1$s. Moteur Phonon de Gradium (gradium-ai/xn-ptts, MIT ou Apache 2.0), basé sur Pocket TTS et Mimi de Kyutai. Modèle phonon-40m-multilingual de Gradium, licence CC BY-NC 4.0 : usage non commercial uniquement. Voix du catalogue gradium/phonon-voices, Apache 2.0. Vitesse et hauteur par Sonic, de Bill Cox, Apache 2.0. Projet indépendant, sans lien avec Gradium. Toute la parole est générée sur l\'appareil, sans internet. Noms des emojis issus d\'Unicode CLDR, licence Unicode.</string>
+    <string name="about_text">Phonon pour Android, version %1$s. Moteur Phonon de Gradium (gradium-ai/xn-ptts, MIT ou Apache 2.0), basé sur Pocket TTS et Mimi de Kyutai. Modèle phonon-40m-multilingual de Gradium, licence CC BY-NC 4.0 : usage non commercial uniquement. Voix du catalogue gradium/phonon-voices, Apache 2.0. Vitesse et hauteur par Sonic, de Bill Cox, Apache 2.0. Projet indépendant, sans lien avec Gradium. Toute la parole est générée sur l\'appareil, sans internet. Noms des emojis issus d\'Unicode CLDR, licence Unicode. L\'application n\'utilise Internet que pour chercher des mises à jour sur GitHub à son ouverture, et pour en télécharger une si vous acceptez.</string>
+
+    <string name="battery_help">Si la voix saccade avec l\'écran verrouillé, le système limite peut-être le moteur pour économiser la batterie.</string>
+    <string name="battery_disable">Désactiver l\'optimisation de la batterie pour Phonon</string>
+    <string name="battery_exempt">L\'optimisation de la batterie est désactivée pour Phonon. Ouvrir la liste du système pour modifier</string>
+    <string name="update_title">Mise à jour disponible</string>
+    <string name="update_body">Une nouvelle version de Phonon est disponible.\nVotre version : %1$s\nDernière version : %2$s\nTaille du téléchargement : %3$s\nLa télécharger et l\'installer maintenant ?</string>
+    <string name="update_download_title">Téléchargement de la mise à jour</string>
+    <string name="update_failed">La mise à jour n\'a pas pu être téléchargée.</string>
+    <string name="update_permission_title">Autorisation nécessaire</string>
+    <string name="update_permission_body">Android a besoin de votre autorisation pour que Phonon installe la mise à jour. Sur l\'écran qui s\'ouvre, activez l\'autorisation, puis revenez.</string>
+    <string name="update_permission_action">Ouvrir les paramètres</string>
 </resources>

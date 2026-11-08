@@ -1,6 +1,7 @@
 package io.github.vrivrixd.phonon
 
 import android.media.AudioFormat
+import android.os.PowerManager
 import android.speech.tts.SynthesisCallback
 import android.speech.tts.SynthesisRequest
 import android.speech.tts.TextToSpeech
@@ -18,6 +19,11 @@ import java.util.Locale
  */
 class PhononService : TextToSpeechService() {
     @Volatile private var stopped = false
+    private val wakeLock by lazy {
+        (getSystemService(POWER_SERVICE) as PowerManager)
+            .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "phonon:synthesis")
+            .apply { setReferenceCounted(false) }
+    }
     @Volatile private var current: Array<String> = arrayOf("eng", "", "")
 
     override fun onCreate() {
@@ -73,6 +79,17 @@ class PhononService : TextToSpeechService() {
     }
 
     override fun onSynthesizeText(request: SynthesisRequest, callback: SynthesisCallback) {
+        // With the screen off the phone may sleep between pieces of audio and speech would stutter.
+        // Held only while speech is being made, so it costs nothing when idle.
+        wakeLock.acquire(WAKE_LOCK_LIMIT_MS)
+        try {
+            synthesize(request, callback)
+        } finally {
+            if (wakeLock.isHeld) wakeLock.release()
+        }
+    }
+
+    private fun synthesize(request: SynthesisRequest, callback: SynthesisCallback) {
         stopped = false
         // A voice an app picked by name is honoured. Otherwise the settings decide, read now, so a
         // change there applies from the next utterance.
@@ -150,6 +167,7 @@ class PhononService : TextToSpeechService() {
 
     companion object {
         private const val TAG = "PhononService"
+        private const val WAKE_LOCK_LIMIT_MS = 10 * 60 * 1000L
 
         /** The model's own sampling temperature, from its config.json ("temp"). */
         const val MODEL_TEMPERATURE = 0.8f

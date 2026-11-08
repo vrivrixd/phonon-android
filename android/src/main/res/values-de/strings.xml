@@ -17,12 +17,8 @@
     <string name="speech">Sprache</string>
     <string name="speed_boost">Zusätzliche Geschwindigkeit (multipliziert die Sprechgeschwindigkeit des Systems)</string>
     <string name="expressiveness">Ausdrucksstärke (Temperatur)</string>
-    <string name="temp_0">Keine: jedes Mal die gleiche Lesung (0)</string>
-    <string name="temp_02">Sehr niedrig (0,2)</string>
-    <string name="temp_04">Niedrig (0,4)</string>
-    <string name="temp_06">Mittel (0,6)</string>
-    <string name="temp_default">Hoch, Standard des Modells (0,8)</string>
-    <string name="temp_1">Maximal (1,0)</string>
+    <string name="temp_default">%1$s (Standard des Modells)</string>
+    <string name="temp_recommended">%1$s (empfohlen)</string>
 
     <string name="performance">Leistung</string>
     <string name="threads">Verwendete Prozessorkerne (dieses Gerät hat %1$d)</string>
@@ -31,5 +27,16 @@
     <string name="open_tts_settings">Android-Einstellungen für Sprachausgabe öffnen</string>
 
     <string name="about">Info</string>
-    <string name="about_text">Phonon für Android, Version %1$s. Phonon-Engine von Gradium (gradium-ai/xn-ptts, MIT oder Apache 2.0), basierend auf Pocket TTS und Mimi von Kyutai. Modell phonon-40m-multilingual von Gradium, Lizenz CC BY-NC 4.0: nur nicht kommerzielle Nutzung. Stimmen aus dem Katalog gradium/phonon-voices, Apache 2.0. Geschwindigkeit und Tonhöhe über Sonic von Bill Cox, Apache 2.0. Unabhängiges Projekt ohne Verbindung zu Gradium. Die gesamte Sprache wird auf dem Gerät erzeugt, ohne Internet. Emoji-Namen aus Unicode CLDR, Unicode-Lizenz.</string>
+    <string name="about_text">Phonon für Android, Version %1$s. Phonon-Engine von Gradium (gradium-ai/xn-ptts, MIT oder Apache 2.0), basierend auf Pocket TTS und Mimi von Kyutai. Modell phonon-40m-multilingual von Gradium, Lizenz CC BY-NC 4.0: nur nicht kommerzielle Nutzung. Stimmen aus dem Katalog gradium/phonon-voices, Apache 2.0. Geschwindigkeit und Tonhöhe über Sonic von Bill Cox, Apache 2.0. Unabhängiges Projekt ohne Verbindung zu Gradium. Die gesamte Sprache wird auf dem Gerät erzeugt, ohne Internet. Emoji-Namen aus Unicode CLDR, Unicode-Lizenz. Die App nutzt das Internet nur, um beim Öffnen auf GitHub nach Updates zu suchen und, wenn du zustimmst, eines herunterzuladen.</string>
+
+    <string name="battery_help">Wenn die Stimme bei gesperrtem Bildschirm stockt, begrenzt das System die Sprachausgabe vielleicht, um Akku zu sparen.</string>
+    <string name="battery_disable">Akku-Optimierung für Phonon deaktivieren</string>
+    <string name="battery_exempt">Die Akku-Optimierung ist für Phonon deaktiviert. Systemliste öffnen, um das zu ändern</string>
+    <string name="update_title">Update verfügbar</string>
+    <string name="update_body">Eine neue Version von Phonon ist verfügbar.\nDeine Version: %1$s\nNeueste Version: %2$s\nDownload-Größe: %3$s\nJetzt herunterladen und installieren?</string>
+    <string name="update_download_title">Update wird heruntergeladen</string>
+    <string name="update_failed">Das Update konnte nicht heruntergeladen werden.</string>
+    <string name="update_permission_title">Berechtigung erforderlich</string>
+    <string name="update_permission_body">Android braucht deine Erlaubnis, damit Phonon das Update installieren kann. Aktiviere die Berechtigung auf dem folgenden Bildschirm und komm dann zurück.</string>
+    <string name="update_permission_action">Einstellungen öffnen</string>
 </resources>

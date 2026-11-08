@@ -1,9 +1,13 @@
 package io.github.vrivrixd.phonon
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
 import android.speech.tts.TextToSpeech
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -21,6 +25,8 @@ import java.util.Locale
 class SettingsActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var column: LinearLayout
+    private lateinit var batteryButton: Button
+    private lateinit var updates: UpdateManager
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     private var pad = 0
@@ -54,10 +60,17 @@ class SettingsActivity : Activity() {
             boosts.indexOfFirst { it == Prefs.speedBoost(this) }.coerceAtLeast(0),
         ) { Prefs.setSpeedBoost(this, boosts[it]) }
 
-        // From the least expressive to the most; -1 is the model's own default (0.8), and the default here.
-        val temps = listOf(0f, 0.2f, 0.4f, 0.6f, -1f, 1f)
-        val tempLabels = listOf(R.string.temp_0, R.string.temp_02, R.string.temp_04, R.string.temp_06, R.string.temp_default, R.string.temp_1)
-            .map { getString(it) }
+        // 0 to 3 in steps of 0.2, the least expressive first. -1 stands for the model's own default
+        // (0.8), which is also the default here.
+        val temps = (0..15).map { if (it == 4) -1f else it / 5f }
+        val tempLabels = (0..15).map {
+            val value = String.format(Locale.getDefault(), "%.1f", it / 5f)
+            when (it) {
+                4 -> getString(R.string.temp_default, value)
+                5 -> getString(R.string.temp_recommended, value)
+                else -> value
+            }
+        }
         val savedTemp = Prefs.temperature(this)
         choice(
             getString(R.string.expressiveness), tempLabels,
@@ -77,6 +90,9 @@ class SettingsActivity : Activity() {
             }
         }
 
+        text(getString(R.string.battery_help))
+        batteryButton = button("") { openBatterySettings() }
+
         heading(R.string.system)
         button(getString(R.string.open_tts_settings)) { startActivity(Intent("com.android.settings.TTS_SETTINGS")) }
 
@@ -84,6 +100,8 @@ class SettingsActivity : Activity() {
         text(getString(R.string.about_text, packageManager.getPackageInfo(packageName, 0).versionName))
 
         connect()
+        updates = UpdateManager(this)
+        updates.checkOnStart()
     }
 
     // Binding to the engine also starts it, and with it the model's loading.
@@ -93,10 +111,13 @@ class SettingsActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        updates.onResume()
+        batteryButton.setText(if (batteryExempt()) R.string.battery_exempt else R.string.battery_disable)
         refresh()
     }
 
     override fun onDestroy() {
+        updates.release()
         status.removeCallbacks(poll)
         status.removeCallbacks(reconnect)
         tts?.shutdown()
@@ -127,6 +148,20 @@ class SettingsActivity : Activity() {
         // Only on a change, so TalkBack does not repeat the live region.
         if (status.text.toString() != message) status.text = message
         if (state != EngineProvider.READY && state != EngineProvider.FAILED) status.postDelayed(poll, 700)
+    }
+
+    private fun batteryExempt() =
+        (getSystemService(POWER_SERVICE) as PowerManager).isIgnoringBatteryOptimizations(packageName)
+
+    // The direct request is a yes or no from the system. Once exempt, only the system's list can undo it.
+    private fun openBatterySettings() {
+        val intent = if (batteryExempt()) Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+        else Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName"))
+        try {
+            startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            startActivity(Intent(Settings.ACTION_SETTINGS))
+        }
     }
 
     private fun restartEngine() {
