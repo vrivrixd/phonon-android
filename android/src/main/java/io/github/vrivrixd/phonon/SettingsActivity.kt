@@ -1,7 +1,6 @@
 package io.github.vrivrixd.phonon
 
 import android.app.Activity
-import android.app.AlertDialog
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -27,6 +26,10 @@ class SettingsActivity : Activity() {
     private var ttsReady = false
     private var pad = 0
     private val poll = Runnable { refresh() }
+    private val reconnect = Runnable {
+        connect()
+        refresh()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,7 +46,7 @@ class SettingsActivity : Activity() {
 
         heading(R.string.default_voices)
         text(getString(R.string.default_voices_help))
-        for (lang in Voices.LANGUAGES) voiceRow(lang)
+        for (lang in Voices.languagesFor(Locale.getDefault().language)) voiceRow(lang)
 
         heading(R.string.speech)
         val boosts = listOf(1.0f, 1.25f, 1.5f, 1.75f, 2.0f, 2.5f, 3.0f)
@@ -73,7 +76,7 @@ class SettingsActivity : Activity() {
         ) { i ->
             if (threads[i] != Prefs.threads(this)) {
                 Prefs.setThreads(this, threads[i])
-                askRestart()
+                restartEngine()
             }
         }
 
@@ -98,6 +101,7 @@ class SettingsActivity : Activity() {
 
     override fun onDestroy() {
         status.removeCallbacks(poll)
+        status.removeCallbacks(reconnect)
         tts?.shutdown()
         super.onDestroy()
     }
@@ -136,20 +140,8 @@ class SettingsActivity : Activity() {
         status.text = getString(R.string.status_loading)
         val app = applicationContext
         Thread { EngineProvider.call(app, EngineProvider.RESTART) }.start()
-        status.postDelayed({
-            if (!isDestroyed) {
-                connect()
-                refresh()
-            }
-        }, 1000)
-    }
-
-    private fun askRestart() {
-        AlertDialog.Builder(this)
-            .setMessage(R.string.restart_message)
-            .setPositiveButton(R.string.restart_now) { _, _ -> restartEngine() }
-            .setNegativeButton(R.string.later, null)
-            .show()
+        status.removeCallbacks(reconnect)
+        status.postDelayed(reconnect, 1000)
     }
 
     private fun voiceRow(lang: String) {

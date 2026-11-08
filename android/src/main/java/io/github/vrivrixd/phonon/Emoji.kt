@@ -42,15 +42,16 @@ class EmojiTable(lines: Sequence<String>) {
             val tab = line.indexOf('\t')
             if (tab <= 0) continue
             val key = line.substring(0, tab)
-            names[key] = line.substring(tab + 1)
+            // CLDR writes "bandeira: Brasil"; the colon and commas would be read as pauses.
+            names[key] = line.substring(tab + 1).replace(PAUSES, " ")
             firstChars += key[0]
             longest = maxOf(longest, key.length)
         }
     }
 
     /**
-     * Replace each emoji, longest sequence first, and set its name off with commas so it does not
-     * run into the words around it: "Oi 😀 tudo bem" becomes "Oi, rosto risonho, tudo bem".
+     * Replace each emoji, longest sequence first, by its name and no added pause, as it sits on
+     * the screen: "Oi 😀 tudo bem" becomes "Oi rosto risonho tudo bem".
      */
     fun spell(text: String): String {
         val source = text.replace("️", "")
@@ -61,21 +62,14 @@ class EmojiTable(lines: Sequence<String>) {
             val c = source[i]
             val length = if (c in firstChars) matchAt(source, i) else 0
             if (length > 0) {
-                while (out.isNotEmpty() && out.last() == ' ') out.setLength(out.length - 1)
-                if (out.isNotEmpty()) out.append(if (out.last().isLetterOrDigit()) ", " else " ")
+                if (out.isNotEmpty() && !out.last().isWhitespace()) out.append(' ')
                 out.append(names.getValue(source.substring(i, i + length)))
                 afterName = true
                 i += length
                 continue
             }
-            if (afterName) {
-                if (c == ' ') {
-                    i++
-                    continue
-                }
-                if (c.isLetterOrDigit()) out.append(", ")
-                afterName = false
-            }
+            if (afterName && c.isLetterOrDigit()) out.append(' ')
+            afterName = false
             out.append(c)
             i++
         }
@@ -89,5 +83,9 @@ class EmojiTable(lines: Sequence<String>) {
             length--
         }
         return 0
+    }
+
+    private companion object {
+        val PAUSES = Regex("\\s*[:,]\\s*")
     }
 }

@@ -17,6 +17,10 @@ object Voices {
     /** The languages the model speaks and the runtime normalizes. */
     val LANGUAGES = listOf("pt", "en", "es", "fr", "de")
 
+    /** [LANGUAGES] for showing: the phone's language first (else English), then English, then the rest. */
+    fun languagesFor(system: String): List<String> =
+        (listOf(if (system in LANGUAGES) system else "en", "en") + LANGUAGES).distinct()
+
     private const val DEFAULT_SUFFIX = "-x-default"
 
     @Volatile private var cached: List<CatalogVoice>? = null
