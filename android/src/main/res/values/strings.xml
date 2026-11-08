@@ -28,9 +28,6 @@
 
     <string name="performance">Performance</string>
     <string name="threads">Processor cores used (this device has %1$d)</string>
-    <string name="restart_message">The engine must restart for this change. Speech may take a few seconds to come back.</string>
-    <string name="restart_now">Restart now</string>
-    <string name="later">Later</string>
 
     <string name="system">System</string>
     <string name="open_tts_settings">Open Android text-to-speech settings</string>

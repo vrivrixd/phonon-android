@@ -54,7 +54,7 @@ class EmojiTable(lines: Sequence<String>) {
      * the screen: "Oi 😀 tudo bem" becomes "Oi rosto risonho tudo bem".
      */
     fun spell(text: String): String {
-        val source = text.replace("️", "")
+        val source = text.replace("\uFE0F", "")
         val out = StringBuilder(source.length + 32)
         var afterName = false
         var i = 0

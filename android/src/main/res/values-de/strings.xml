@@ -26,9 +26,6 @@
 
     <string name="performance">Leistung</string>
     <string name="threads">Verwendete Prozessorkerne (dieses Gerät hat %1$d)</string>
-    <string name="restart_message">Die Sprachausgabe muss für diese Änderung neu starten. Es kann ein paar Sekunden dauern, bis sie wieder spricht.</string>
-    <string name="restart_now">Jetzt neu starten</string>
-    <string name="later">Später</string>
 
     <string name="system">System</string>
     <string name="open_tts_settings">Android-Einstellungen für Sprachausgabe öffnen</string>

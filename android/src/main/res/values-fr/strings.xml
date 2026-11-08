@@ -26,9 +26,6 @@
 
     <string name="performance">Performances</string>
     <string name="threads">Cœurs du processeur utilisés (cet appareil en a %1$d)</string>
-    <string name="restart_message">Le moteur doit redémarrer pour appliquer ce changement. La parole peut mettre quelques secondes à revenir.</string>
-    <string name="restart_now">Redémarrer maintenant</string>
-    <string name="later">Plus tard</string>
 
     <string name="system">Système</string>
     <string name="open_tts_settings">Ouvrir les paramètres de synthèse vocale d\'Android</string>

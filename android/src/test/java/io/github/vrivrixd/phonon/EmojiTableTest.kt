@@ -18,9 +18,9 @@ class EmojiTableTest {
         assertEquals("Oi, tudo bem? 100%", table.spell("Oi, tudo bem? 100%"))
     }
 
-    @Test fun anEmojiIsSetOffFromTheWords() {
-        assertEquals("Oi, rosto risonho, tudo bem", table.spell("Oi 😀 tudo bem"))
-        assertEquals("Oi, rosto risonho, tudo", table.spell("Oi😀tudo"))
+    @Test fun anEmojiAddsNoPause() {
+        assertEquals("Oi rosto risonho tudo bem", table.spell("Oi 😀 tudo bem"))
+        assertEquals("Oi rosto risonho tudo", table.spell("Oi😀tudo"))
     }
 
     @Test fun anEmojiOnItsOwnIsJustItsName() {
@@ -32,11 +32,17 @@ class EmojiTableTest {
     }
 
     @Test fun theLongestSequenceWins() {
-        assertEquals("polegar para cima: pele morena", table.spell("👍🏽"))
+        assertEquals("polegar para cima pele morena", table.spell("👍🏽"))
     }
 
     @Test fun neighboursAreSeparated() {
-        assertEquals("rosto risonho, polegar para cima", table.spell("😀👍"))
+        assertEquals("rosto risonho polegar para cima", table.spell("😀👍"))
+    }
+
+    @Test fun namesHaveNoPausesInside() {
+        val names = EmojiTable(sequenceOf("😀\tfamília: homem, mulher e menina", "👍\ttouches : #"))
+        assertEquals("família homem mulher e menina", names.spell("😀"))
+        assertEquals("touches #", names.spell("👍"))
     }
 
     @Test fun variationSelectorsDoNotMatter() {

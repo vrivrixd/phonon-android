@@ -26,9 +26,6 @@
 
     <string name="performance">Desempenho</string>
     <string name="threads">Núcleos do processador usados (o aparelho tem %1$d)</string>
-    <string name="restart_message">O motor precisa reiniciar para aplicar a mudança. A fala pode demorar alguns segundos para voltar.</string>
-    <string name="restart_now">Reiniciar agora</string>
-    <string name="later">Depois</string>
 
     <string name="system">Sistema</string>
     <string name="open_tts_settings">Abrir configurações de voz do Android</string>
