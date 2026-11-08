@@ -66,9 +66,8 @@ jobs:
           workspaces: upstream -> target
           cache-all-crates: true
 
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-ndk
+      - name: Install cargo-ndk
+        run: command -v cargo-ndk || cargo install cargo-ndk --version 4.1.2 --locked
 
       - name: Download the model pack
         env:
