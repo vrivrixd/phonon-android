@@ -10,6 +10,9 @@ with **TalkBack** and every app that speaks through Android's text-to-speech API
   Mexico), French and German.
 - The system and TalkBack speech rate and pitch work (through Sonic), plus an optional extra
   speed multiplier.
+- Emoji are read aloud by name in all five languages.
+- Changes in the app apply from the next utterance. The engine runs in its own process, so
+  restarting it does not close the app.
 - Speech stops instantly when interrupted, leading silence is trimmed, and each language has a
   selectable default voice.
 - The interface follows the phone's language: English, Portuguese, Spanish, French or German
@@ -40,7 +43,7 @@ Everything runs in GitHub Actions (`.github/workflows/build.yml`):
 4. Builds `libptts_ffi.so` for arm64 with Rust and the Android NDK, in both variants.
 5. Builds and signs the APK with Gradle.
 
-Every push to `main` produces an APK as a workflow artifact. A `v*` tag (for example `v1.0.0`)
+Every push to `main` produces an APK as a workflow artifact. A `v*` tag (for example `v1.1.0`)
 publishes a release with the APK, using `release-notes/<tag>.md` as its description when present.
 
 Signing uses the `KEYSTORE_B64`, `KEYSTORE_PASSWORD` and `KEY_ALIAS` secrets. Without them the
@@ -54,6 +57,8 @@ APK is signed with a throwaway key, and updates no longer install over the previ
   may not be sold or used commercially while it ships that model.
 - Voices `gradium/phonon-voices`: Apache 2.0.
 - Sonic (Bill Cox), used for speed and pitch: Apache 2.0.
+- Emoji names from [Unicode CLDR](https://cldr.unicode.org/) (`scripts/generate-emoji-tables.py`):
+  Unicode License v3.
 
 Full texts are in `licenses/`. Phonon is made by Gradium and builds on Kyutai's Pocket TTS and
 Mimi. This is an independent project, not affiliated with Gradium. The voice-to-language list comes

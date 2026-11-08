@@ -17,6 +17,8 @@ object Voices {
     /** The languages the model speaks and the runtime normalizes. */
     val LANGUAGES = listOf("pt", "en", "es", "fr", "de")
 
+    private const val DEFAULT_SUFFIX = "-x-default"
+
     @Volatile private var cached: List<CatalogVoice>? = null
 
     fun all(context: Context): List<CatalogVoice> = cached ?: synchronized(this) {
@@ -30,6 +32,24 @@ object Voices {
             val o = array.getJSONObject(it)
             CatalogVoice(o.getString("name"), Locale.forLanguageTag(o.getString("locale")), o.optBoolean("character"))
         }
+    }
+
+    /**
+     * The default voices, one per regional locale: what Android hands to apps that ask for a
+     * language. Apps keep the name they got and send it with every request, so a real voice's name
+     * here would freeze the choice until they reconnect. These stand for "whichever voice the
+     * settings name right now", and a voice an app picks by its real name stays honoured.
+     */
+    fun defaultVoiceLocales(context: Context): List<Locale> =
+        all(context).filter { !it.character }.map { it.locale }.distinct()
+
+    fun defaultVoiceName(locale: Locale): String = "${locale.toLanguageTag()}$DEFAULT_SUFFIX"
+
+    /** The locale of a name from [defaultVoiceName], or null for any other name. */
+    fun defaultVoiceLocale(context: Context, name: String?): Locale? {
+        if (name == null || !name.endsWith(DEFAULT_SUFFIX)) return null
+        val locale = Locale.forLanguageTag(name.removeSuffix(DEFAULT_SUFFIX))
+        return locale.takeIf { it in defaultVoiceLocales(context) }
     }
 
     fun byAndroidName(context: Context, name: String?): CatalogVoice? =

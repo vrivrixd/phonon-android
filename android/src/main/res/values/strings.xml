@@ -36,5 +36,5 @@
     <string name="open_tts_settings">Open Android text-to-speech settings</string>
 
     <string name="about">About</string>
-    <string name="about_text">Phonon for Android, version %1$s. Phonon engine by Gradium (gradium-ai/xn-ptts, MIT or Apache 2.0), based on Kyutai\'s Pocket TTS and Mimi. Gradium phonon-40m-multilingual model, CC BY-NC 4.0 license: non-commercial use only. Voices from the gradium/phonon-voices catalog, Apache 2.0. Speed and pitch by Sonic, by Bill Cox, Apache 2.0. Independent project, not affiliated with Gradium. All speech is generated on the device, without internet.</string>
+    <string name="about_text">Phonon for Android, version %1$s. Phonon engine by Gradium (gradium-ai/xn-ptts, MIT or Apache 2.0), based on Kyutai\'s Pocket TTS and Mimi. Gradium phonon-40m-multilingual model, CC BY-NC 4.0 license: non-commercial use only. Voices from the gradium/phonon-voices catalog, Apache 2.0. Speed and pitch by Sonic, by Bill Cox, Apache 2.0. Independent project, not affiliated with Gradium. All speech is generated on the device, without internet. Emoji names from Unicode CLDR, Unicode License.</string>
 </resources>

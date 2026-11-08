@@ -34,5 +34,5 @@
     <string name="open_tts_settings">Ouvrir les paramètres de synthèse vocale d\'Android</string>
 
     <string name="about">À propos</string>
-    <string name="about_text">Phonon pour Android, version %1$s. Moteur Phonon de Gradium (gradium-ai/xn-ptts, MIT ou Apache 2.0), basé sur Pocket TTS et Mimi de Kyutai. Modèle phonon-40m-multilingual de Gradium, licence CC BY-NC 4.0 : usage non commercial uniquement. Voix du catalogue gradium/phonon-voices, Apache 2.0. Vitesse et hauteur par Sonic, de Bill Cox, Apache 2.0. Projet indépendant, sans lien avec Gradium. Toute la parole est générée sur l\'appareil, sans internet.</string>
+    <string name="about_text">Phonon pour Android, version %1$s. Moteur Phonon de Gradium (gradium-ai/xn-ptts, MIT ou Apache 2.0), basé sur Pocket TTS et Mimi de Kyutai. Modèle phonon-40m-multilingual de Gradium, licence CC BY-NC 4.0 : usage non commercial uniquement. Voix du catalogue gradium/phonon-voices, Apache 2.0. Vitesse et hauteur par Sonic, de Bill Cox, Apache 2.0. Projet indépendant, sans lien avec Gradium. Toute la parole est générée sur l\'appareil, sans internet. Noms des emojis issus d\'Unicode CLDR, licence Unicode.</string>
 </resources>

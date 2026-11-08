@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 
 /**
  * The bundled model: copied out of the APK's assets on first run (the runtime loads a folder),
- * then loaded once, off the main thread, and kept for the life of the process.
+ * then loaded once, off the main thread. All of this lives in the engine's process (":engine").
  */
 object Model {
     private const val TAG = "PhononModel"

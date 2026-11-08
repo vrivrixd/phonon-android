@@ -51,16 +51,21 @@ class PhononService : TextToSpeechService() {
 
     override fun onGetLanguage(): Array<String> = current
 
-    override fun onGetVoices(): List<Voice> = Voices.all(this).map { voice(it) }
+    override fun onGetVoices(): List<Voice> =
+        Voices.defaultVoiceLocales(this).map { voice(Voices.defaultVoiceName(it), it) } +
+            Voices.all(this).map { voice(it.androidName, it.locale) }
 
     override fun onIsValidVoiceName(voiceName: String?): Int =
-        if (Voices.byAndroidName(this, voiceName) != null) TextToSpeech.SUCCESS else TextToSpeech.ERROR
+        if (Voices.byAndroidName(this, voiceName) != null || Voices.defaultVoiceLocale(this, voiceName) != null) TextToSpeech.SUCCESS
+        else TextToSpeech.ERROR
 
     override fun onLoadVoice(voiceName: String?): Int = onIsValidVoiceName(voiceName)
 
     override fun onGetDefaultVoiceNameFor(lang: String?, country: String?, variant: String?): String? {
         val code = Voices.code(lang) ?: return null
-        return Voices.defaultFor(this, code, Voices.country(country))?.androidName
+        val locales = Voices.defaultVoiceLocales(this).filter { it.language == code }
+        val c = Voices.country(country)
+        return (locales.firstOrNull { it.country == c } ?: locales.firstOrNull())?.let { Voices.defaultVoiceName(it) }
     }
 
     override fun onStop() {
@@ -69,18 +74,20 @@ class PhononService : TextToSpeechService() {
 
     override fun onSynthesizeText(request: SynthesisRequest, callback: SynthesisCallback) {
         stopped = false
-        // The voice the user picked for the request's language wins over the one the app asked
-        // for only when the app asked for none; an explicit voice is honoured.
-        val requestLang = Voices.code(request.language)
+        // A voice an app picked by name is honoured. Otherwise the settings decide, read now, so a
+        // change there applies from the next utterance.
+        val default = Voices.defaultVoiceLocale(this, request.voiceName)
+        val requestLang = Voices.code(request.language) ?: default?.language
+        val country = Voices.country(request.country).ifEmpty { default?.country.orEmpty() }
         val voice = Voices.byAndroidName(this, request.voiceName)
-            ?.takeIf { requestLang == null || it.lang == requestLang || request.language.isNullOrEmpty() }
-            ?: requestLang?.let { Voices.defaultFor(this, it, Voices.country(request.country)) }
+            ?.takeIf { requestLang == null || it.lang == requestLang }
+            ?: requestLang?.let { Voices.defaultFor(this, it, country) }
             ?: Voices.defaultFor(this, "pt", "BR")
         if (voice == null) {
             fail(callback, TextToSpeech.ERROR_INVALID_REQUEST)
             return
         }
-        val text = request.charSequenceText?.toString().orEmpty()
+        val text = Emoji.spell(this, request.charSequenceText?.toString().orEmpty(), voice.lang)
         if (callback.start(AudioPipeline.SAMPLE_RATE, AudioFormat.ENCODING_PCM_16BIT, 1) != TextToSpeech.SUCCESS) return
         if (text.isBlank()) {
             callback.done()
@@ -137,8 +144,8 @@ class PhononService : TextToSpeechService() {
         callback.done()
     }
 
-    private fun voice(v: CatalogVoice) = Voice(
-        v.androidName, v.locale, Voice.QUALITY_VERY_HIGH, Voice.LATENCY_NORMAL, false, emptySet(),
+    private fun voice(name: String, locale: Locale) = Voice(
+        name, locale, Voice.QUALITY_VERY_HIGH, Voice.LATENCY_NORMAL, false, emptySet(),
     )
 
     companion object {

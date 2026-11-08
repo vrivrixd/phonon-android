@@ -5,7 +5,6 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.os.Process
 import android.speech.tts.TextToSpeech
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -27,6 +26,7 @@ class SettingsActivity : Activity() {
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     private var pad = 0
+    private val poll = Runnable { refresh() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,7 +83,11 @@ class SettingsActivity : Activity() {
         heading(R.string.about)
         text(getString(R.string.about_text, packageManager.getPackageInfo(packageName, 0).versionName))
 
-        Model.load(this)
+        connect()
+    }
+
+    // Binding to the engine also starts it, and with it the model's loading.
+    private fun connect() {
         tts = TextToSpeech(this, { ttsReady = it == TextToSpeech.SUCCESS }, packageName)
     }
 
@@ -93,27 +97,57 @@ class SettingsActivity : Activity() {
     }
 
     override fun onDestroy() {
+        status.removeCallbacks(poll)
         tts?.shutdown()
         super.onDestroy()
     }
 
     private fun refresh() {
-        status.text = when (val s = Model.state) {
-            is Model.State.Idle, is Model.State.Loading -> getString(R.string.status_loading)
-            is Model.State.Extracting -> getString(R.string.status_extracting, s.file)
-            is Model.State.Failed -> getString(R.string.status_failed, s.message)
-            is Model.State.Ready -> getString(
-                R.string.status_ready, fmt(s.seconds.toFloat()),
-                getString(if (PhononTTS.variant == "ptts_ffi") R.string.library_fast else R.string.library_compat),
+        status.removeCallbacks(poll)
+        val app = applicationContext
+        // Off the main thread: this may have to wait for the engine's process to start.
+        Thread {
+            val reply = EngineProvider.call(app, EngineProvider.STATUS) ?: Bundle()
+            runOnUiThread { if (!isDestroyed) show(reply) }
+        }.start()
+    }
+
+    private fun show(reply: Bundle) {
+        val state = reply.getString(EngineProvider.STATE)
+        val message = when (state) {
+            EngineProvider.EXTRACTING -> getString(R.string.status_extracting, reply.getString(EngineProvider.DETAIL))
+            EngineProvider.FAILED -> getString(R.string.status_failed, reply.getString(EngineProvider.DETAIL))
+            EngineProvider.READY -> getString(
+                R.string.status_ready, fmt(reply.getDouble(EngineProvider.SECONDS).toFloat()),
+                getString(if (reply.getBoolean(EngineProvider.OPTIMIZED)) R.string.library_fast else R.string.library_compat),
             )
+            else -> getString(R.string.status_loading)
         }
-        if (Model.state !is Model.State.Ready && Model.state !is Model.State.Failed) status.postDelayed(::refresh, 700)
+        // Only on a change, so TalkBack does not repeat the live region.
+        if (status.text.toString() != message) status.text = message
+        if (state != EngineProvider.READY && state != EngineProvider.FAILED) status.postDelayed(poll, 700)
+    }
+
+    private fun restartEngine() {
+        tts?.shutdown()
+        tts = null
+        ttsReady = false
+        status.removeCallbacks(poll)
+        status.text = getString(R.string.status_loading)
+        val app = applicationContext
+        Thread { EngineProvider.call(app, EngineProvider.RESTART) }.start()
+        status.postDelayed({
+            if (!isDestroyed) {
+                connect()
+                refresh()
+            }
+        }, 1000)
     }
 
     private fun askRestart() {
         AlertDialog.Builder(this)
             .setMessage(R.string.restart_message)
-            .setPositiveButton(R.string.restart_now) { _, _ -> Process.killProcess(Process.myPid()) }
+            .setPositiveButton(R.string.restart_now) { _, _ -> restartEngine() }
             .setNegativeButton(R.string.later, null)
             .show()
     }

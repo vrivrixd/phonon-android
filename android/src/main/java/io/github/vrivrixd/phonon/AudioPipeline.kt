@@ -8,11 +8,12 @@ import kotlin.math.roundToInt
  * What happens to the model's audio before Android gets it: the leading silence dropped, then
  * speed and pitch through Sonic (Bill Cox, Apache-2.0), then 16-bit little-endian PCM.
  */
-class AudioPipeline(private val speed: Float, private val pitch: Float, trim: Boolean) {
+class AudioPipeline(speed: Float, pitch: Float, trim: Boolean) {
     private val sonic: Sonic? = if (abs(speed - 1f) < 0.01f && abs(pitch - 1f) < 0.01f) null else
-        Sonic(SAMPLE_RATE, 1).apply {
-            setSpeed(speed)
-            setPitch(pitch)
+        Sonic(SAMPLE_RATE, 1).also {
+            // Not apply: inside it, "speed" would mean Sonic's own getSpeed(), and nothing changes.
+            it.setSpeed(speed)
+            it.setPitch(pitch)
         }
 
     private var trimming = trim
@@ -62,7 +63,9 @@ class AudioPipeline(private val speed: Float, private val pitch: Float, trim: Bo
 
     private fun run(input: FloatArray): ByteArray {
         val s = sonic ?: return pcm16(input, input.size)
-        s.writeFloatToStream(input, input.size)
+        // Sonic casts to 16 bits without clamping, so a sample past full scale would wrap around.
+        val clamped = FloatArray(input.size) { input[it].coerceIn(-1f, 1f) }
+        s.writeFloatToStream(clamped, clamped.size)
         return drain(s)
     }
 

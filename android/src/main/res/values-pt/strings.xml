@@ -34,5 +34,5 @@
     <string name="open_tts_settings">Abrir configurações de voz do Android</string>
 
     <string name="about">Sobre</string>
-    <string name="about_text">Phonon para Android, versão %1$s. Motor Phonon da Gradium (gradium-ai/xn-ptts, MIT ou Apache 2.0), baseado no Pocket TTS e no Mimi da Kyutai. Modelo phonon-40m-multilingual da Gradium, licença CC BY-NC 4.0: somente uso não comercial. Vozes do catálogo gradium/phonon-voices, Apache 2.0. Velocidade e tom pelo Sonic, de Bill Cox, Apache 2.0. Projeto independente, sem relação com a Gradium. Toda a fala é gerada no aparelho, sem internet.</string>
+    <string name="about_text">Phonon para Android, versão %1$s. Motor Phonon da Gradium (gradium-ai/xn-ptts, MIT ou Apache 2.0), baseado no Pocket TTS e no Mimi da Kyutai. Modelo phonon-40m-multilingual da Gradium, licença CC BY-NC 4.0: somente uso não comercial. Vozes do catálogo gradium/phonon-voices, Apache 2.0. Velocidade e tom pelo Sonic, de Bill Cox, Apache 2.0. Projeto independente, sem relação com a Gradium. Toda a fala é gerada no aparelho, sem internet. Nomes de emojis do Unicode CLDR, licença Unicode.</string>
 </resources>
