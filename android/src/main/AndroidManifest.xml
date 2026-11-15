@@ -49,6 +49,14 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".VoiceManagerActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:exported="false"
+            android:label="@string/manage_title"
+            android:parentActivityName=".SettingsActivity"
+            android:theme="@style/Settings" />
+
         <service
             android:name=".ForegroundKeeper"
             android:exported="false"

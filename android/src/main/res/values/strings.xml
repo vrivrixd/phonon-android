@@ -46,7 +46,6 @@
     <string name="speech_notification">Making speech</string>
     <string name="manage_voices">Manage extra voices</string>
     <string name="manage_title">Extra voices</string>
-    <string name="navigate_up">Navigate up</string>
     <string name="add_voice">Add voice</string>
     <string name="no_extra_voices">No extra voices yet. Use Add voice to choose a Phonon voice file (.safetensors).</string>
     <string name="rename">Rename</string>

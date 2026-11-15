@@ -168,9 +168,9 @@ class PhononService : TextToSpeechService() {
         }, "Phonon maker")
         maker.start()
 
-        // Refused the foreground, the engine may be too slow to keep up with the screen off. Reading
-        // has no one waiting for an instant answer, so begin with a little in hand.
-        if (!ForegroundKeeper.active && !power.isInteractive) buffer.awaitLead(PREROLL_BYTES)
+        // Not a foreground service (refused, or still starting), the engine may be held to the slow
+        // cores and fall behind: begin with a little in hand rather than stutter.
+        if (!ForegroundKeeper.active) buffer.awaitLead(PREROLL_BYTES)
 
         val max = callback.maxBufferSize
         fun send(bytes: ByteArray): Boolean {

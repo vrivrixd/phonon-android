@@ -118,9 +118,15 @@ object Voices {
         } ?: ""
     }
 
-    /** The voices offered for a language: regional ones first, then character voices, then added ones. */
+    /**
+     * The voices offered for a language: regional ones first, then character voices, in catalog
+     * order, then the added ones in alphabetical order.
+     */
     fun forLanguage(context: Context, lang: String): List<CatalogVoice> =
-        all(context).filter { it.lang == lang }.sortedBy { if (it.imported) 2 else if (it.character) 1 else 0 }
+        all(context).filter { it.lang == lang }.sortedWith(
+            compareBy<CatalogVoice> { if (it.imported) 2 else if (it.character) 1 else 0 }
+                .thenBy { if (it.imported) it.name.lowercase(Locale.ROOT) else "" },
+        )
 
     /**
      * The voice to speak [lang] (and [country], if given) when a request names none: the user's

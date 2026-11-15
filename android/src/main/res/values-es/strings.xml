@@ -43,7 +43,6 @@
     <string name="speech_notification">Generando la voz</string>
     <string name="manage_voices">Administrar voces extra</string>
     <string name="manage_title">Voces extra</string>
-    <string name="navigate_up">Navegar hacia arriba</string>
     <string name="add_voice">Añadir voz</string>
     <string name="no_extra_voices">Todavía no hay voces extra. Usa Añadir voz para elegir un archivo de voz de Phonon (.safetensors).</string>
     <string name="rename">Cambiar nombre</string>

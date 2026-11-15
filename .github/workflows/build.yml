@@ -108,43 +108,28 @@ jobs:
           done
           ls contributed/voices
 
-      - name: Build the host tools (quantizer and ptts command line)
+      - name: Build the ptts command line
         working-directory: upstream
-        run: cargo build --release -p ptts --features cli --bin ptts --example quantize
+        run: cargo build --release -p ptts --features cli --bin ptts
 
-      - name: Quantize the weights to q8_0 for phones
+      # The app ships the full-precision weights: the compact q8_0 ones sounded different from the
+      # computer's. Synthesis is checked here; the audio stays on the runner and is never published.
+      - name: Smoke test
         run: |
-          upstream/target/release/examples/quantize pack/full/model.safetensors pack/model.q8.gguf --quant q8_0 --no-mimi-encoder | tail -3
-          ls -la pack/model.q8.gguf
-
-      # Synthesis is checked here; the audio stays on the runner and is never published.
-      - name: Smoke test both weight formats and pick one
-        id: weights
-        run: |
-          set +e
-          mk() { mkdir -p "$1"; cp pack/full/config.json pack/full/tokenizer.json "$1/"; cp -r pack/full/voices "$1/"; }
-          mk pack/q8; cp pack/model.q8.gguf pack/q8/
-          mk pack/st; cp pack/full/model.safetensors pack/st/
+          mkdir -p pack/st; cp pack/full/config.json pack/full/tokenizer.json pack/full/model.safetensors pack/st/; cp -r pack/full/voices pack/st/
           OUT="$RUNNER_TEMP/smoke"; mkdir -p "$OUT"
           PTTS=upstream/target/release/ptts
           PT="Olá! Este é um teste rápido do motor de voz."
           EN="Hello, this is a quick test of the speech engine."
-          ok_q8=0; ok_st=0
-          for v in Davi Rafaela; do
-            $PTTS -m pack/q8 --quant q8_0 --device cpu -t 0.8 --lang pt -v "$v" -o "$OUT/q8-$v.wav" "$PT" || ok_q8=1
-          done
-          $PTTS -m pack/q8 --quant q8_0 --device cpu -t 0.8 --lang en -v Freya -o "$OUT/q8-Freya.wav" "$EN" || ok_q8=1
-          $PTTS -m pack/st --device cpu -t 0.8 --lang pt -v Davi -o "$OUT/f32-Davi.wav" "$PT" || ok_st=1
-          ok_c=0
+          ok=0
+          for v in Davi Rafaela; do $PTTS -m pack/st --device cpu -t 0.8 --lang pt -v "$v" -o "$OUT/$v.wav" "$PT" || ok=1; done
+          $PTTS -m pack/st --device cpu -t 0.8 --lang en -v Freya -o "$OUT/Freya.wav" "$EN" || ok=1
           for f in contributed/voices/*.safetensors; do
             [ -e "$f" ] || continue
-            $PTTS -m pack/q8 --quant q8_0 --device cpu -t 0.8 --lang pt -v "$(basename "$f" .safetensors)" -o "$OUT/c-$(basename "$f" .safetensors).wav" "$PT" || ok_c=1
+            $PTTS -m pack/st --device cpu -t 0.8 --lang pt -v "$(basename "$f" .safetensors)" -o "$OUT/c-$(basename "$f" .safetensors).wav" "$PT" || ok=1
           done
           ls -la "$OUT"; rm -rf "$OUT"
-          if [ $ok_c != 0 ]; then echo "::error::a contributed voice does not synthesize"; exit 1; fi
-          if [ $ok_q8 = 0 ]; then echo "weights=q8" >> "$GITHUB_OUTPUT";
-          elif [ $ok_st = 0 ]; then echo "weights=st" >> "$GITHUB_OUTPUT"; echo "::warning::q8 failed, shipping safetensors";
-          else echo "::error::neither weight format synthesizes"; exit 1; fi
+          if [ $ok != 0 ]; then echo "::error::a voice does not synthesize"; exit 1; fi
 
       - name: Build the Android native library
         run: |
@@ -153,12 +138,12 @@ jobs:
 
       - name: Put the model into the APK assets
         run: |
-          W="${{ steps.weights.outputs.weights }}"
+          W=st
           D=android/model-assets/model
           rm -rf android/model-assets; mkdir -p "$D"
           cp -r "pack/$W/." "$D/"
           # Any change to the model, the runtime or the voices makes the app copy the model out again.
-          VOICES=$(cat "$D"/voices/*.safetensors | sha256sum | cut -c1-12)
+          VOICES=$( (ls "$D/voices"; cat "$D"/voices/*.safetensors) | sha256sum | cut -c1-12)
           echo "$(sha256sum "pack/$MODEL_PACK_ASSET" | cut -c1-16)-$W-${UPSTREAM_REF:0:12}-$VOICES" > "$D/PACK_VERSION"
           cat "$D/PACK_VERSION"; du -sh "$D"
           if [ -d contributed ]; then

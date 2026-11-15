@@ -5,7 +5,8 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * What happens to the model's audio before Android gets it: the leading silence dropped, then
+ * What happens to the model's audio before Android gets it: the decoder's start-up click silenced,
+ * the leading silence dropped, a short fade-in, then
  * speed and pitch through Sonic (Bill Cox, Apache-2.0), then 16-bit little-endian PCM.
  */
 class AudioPipeline(speed: Float, pitch: Float, trim: Boolean = true) {
@@ -22,9 +23,20 @@ class AudioPipeline(speed: Float, pitch: Float, trim: Boolean = true) {
     private val preRoll = FloatArray(PRE_ROLL)
     private var preRollFill = 0
     private var out = FloatArray(0)
+    private var faded = 0
+    private var position = 0
 
     /** Process one piece of the model's audio. May return an empty array. */
-    fun process(pcm: FloatArray): ByteArray {
+    fun process(model: FloatArray): ByteArray {
+        // Every utterance opens with a short burst from the audio decoder starting up, before any
+        // speech: a click about 40 dB down, gone within 10 ms. Silenced here, it is also no longer
+        // mistaken for the start of speech, so the silence after it is trimmed too.
+        var pcm = model
+        if (position < DECODER_CLICK) {
+            pcm = model.copyOf()
+            for (i in 0 until minOf(pcm.size, DECODER_CLICK - position)) pcm[i] = 0f
+        }
+        position += model.size
         var input = pcm
         if (trimming) {
             val onset = pcm.indexOfFirst { abs(it) > THRESHOLD }
@@ -39,7 +51,24 @@ class AudioPipeline(speed: Float, pitch: Float, trim: Boolean = true) {
             val fromHistory = minOf(preRollFill, PRE_ROLL - (start - preStart))
             input = preRoll.copyOfRange(preRollFill - fromHistory, preRollFill) + pcm.copyOfRange(preStart, pcm.size)
         }
+        if (faded < FADE_IN) input = fadeIn(input)
         return run(input)
+    }
+
+    /**
+     * Ramp the first samples up from silence. Audio that starts on a sample far from zero, as it
+     * does once leading silence is cut, is heard as a click.
+     */
+    private fun fadeIn(pcm: FloatArray): FloatArray {
+        val result = pcm.copyOf()
+        var i = 0
+        while (i < result.size && faded < FADE_IN) {
+            val x = faded.toFloat() / FADE_IN
+            result[i] *= x * x * (3 - 2 * x)
+            i++
+            faded++
+        }
+        return result
     }
 
     /** What Sonic still holds at the end of the utterance. */
@@ -82,6 +111,8 @@ class AudioPipeline(speed: Float, pitch: Float, trim: Boolean = true) {
         private const val THRESHOLD = 0.004f
         private const val PRE_ROLL = SAMPLE_RATE / 50 // 20 ms
         private const val MAX_TRIM = SAMPLE_RATE // never drop more than 1 s
+        private const val FADE_IN = SAMPLE_RATE / 200 // 5 ms
+        private const val DECODER_CLICK = SAMPLE_RATE / 50 // 20 ms
 
         fun pcm16(pcm: FloatArray, n: Int): ByteArray {
             val bytes = ByteArray(n * 2)

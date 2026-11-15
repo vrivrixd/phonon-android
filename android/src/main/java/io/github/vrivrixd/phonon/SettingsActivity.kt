@@ -27,7 +27,6 @@ class SettingsActivity : Activity() {
     private lateinit var column: LinearLayout
     private lateinit var batteryButton: Button
     private lateinit var updates: UpdateManager
-    private lateinit var voiceManager: VoiceManager
     private val voiceRows = ArrayList<VoiceRow>()
     private var tts: TextToSpeech? = null
     private var ttsReady = false
@@ -54,8 +53,7 @@ class SettingsActivity : Activity() {
         heading(R.string.default_voices)
         text(getString(R.string.default_voices_help))
         for (lang in Voices.languagesFor(Locale.getDefault().language)) voiceRows += VoiceRow(lang)
-        voiceManager = VoiceManager(this, ::speakVoice) { voiceRows.forEach { it.reload() } }
-        button(getString(R.string.manage_voices)) { voiceManager.show() }
+        button(getString(R.string.manage_voices)) { startActivity(Intent(this, VoiceManagerActivity::class.java)) }
 
         heading(R.string.speech)
         val boosts = listOf(1.0f, 1.25f, 1.5f, 1.75f, 2.0f, 2.5f, 3.0f)
@@ -117,6 +115,8 @@ class SettingsActivity : Activity() {
     override fun onResume() {
         super.onResume()
         updates.onResume()
+        // Voices may have been added, renamed or removed on the extra voices screen.
+        voiceRows.forEach { it.reload() }
         batteryButton.setText(if (batteryExempt()) R.string.battery_exempt else R.string.battery_disable)
         refresh()
     }
@@ -223,10 +223,6 @@ class SettingsActivity : Activity() {
         engine.speak(sample, TextToSpeech.QUEUE_FLUSH, null, "sample")
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        voiceManager.onActivityResult(requestCode, resultCode, data)
-    }
 
     private fun heading(label: Int) = TextView(this).apply {
         setText(label)

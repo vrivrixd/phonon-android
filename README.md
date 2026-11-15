@@ -46,7 +46,8 @@ Everything runs in GitHub Actions (`.github/workflows/build.yml`):
    at a pinned commit, and applies any patches in `patches/`.
 2. Downloads the model and voice pack, kept as an asset of this repository's `model-pack`
    release (it is too large for git).
-3. Quantizes the weights to q8_0 (smaller and faster on phones) and checks that synthesis works.
+3. Checks that synthesis works with every voice. The app ships the full-precision weights, as
+   the computer versions do.
 4. Builds `libptts_ffi.so` for arm64 with Rust and the Android NDK, in both variants.
 5. Builds and signs the APK with Gradle.
 

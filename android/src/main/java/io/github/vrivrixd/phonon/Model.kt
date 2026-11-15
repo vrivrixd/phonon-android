@@ -46,7 +46,16 @@ object Model {
                 state = State.Loading
                 // Read once by the runtime's thread pool, before the first load.
                 Os.setenv("RAYON_NUM_THREADS", Prefs.threads(app).toString(), true)
+                // Left by test builds that offered two precisions.
+                File(app.filesDir, "model-run").let { run -> run.listFiles()?.forEach { it.delete() }; run.delete() }
                 val tts = PhononTTS(dir(app).path, "pt")
+                // One short utterance, thrown away: the weights are read from storage on first use,
+                // and the first real speech would otherwise be slow enough to stutter.
+                try {
+                    tts.speak("A") { true }
+                } catch (e: Exception) {
+                    Log.w(TAG, "warm-up failed", e)
+                }
                 State.Ready(tts, (System.nanoTime() - start) / 1e9)
             } catch (t: Throwable) {
                 Log.e(TAG, "loading the model failed", t)

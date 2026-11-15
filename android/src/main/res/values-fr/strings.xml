@@ -43,7 +43,6 @@
     <string name="speech_notification">Génération de la voix</string>
     <string name="manage_voices">Gérer les voix supplémentaires</string>
     <string name="manage_title">Voix supplémentaires</string>
-    <string name="navigate_up">Remonter</string>
     <string name="add_voice">Ajouter une voix</string>
     <string name="no_extra_voices">Aucune voix supplémentaire pour l\'instant. Utilisez Ajouter une voix pour choisir un fichier de voix Phonon (.safetensors).</string>
     <string name="rename">Renommer</string>

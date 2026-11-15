@@ -43,7 +43,6 @@
     <string name="speech_notification">Sprache wird erzeugt</string>
     <string name="manage_voices">Zusätzliche Stimmen verwalten</string>
     <string name="manage_title">Zusätzliche Stimmen</string>
-    <string name="navigate_up">Nach oben</string>
     <string name="add_voice">Stimme hinzufügen</string>
     <string name="no_extra_voices">Noch keine zusätzlichen Stimmen. Wähle mit Stimme hinzufügen eine Phonon-Stimmdatei (.safetensors).</string>
     <string name="rename">Umbenennen</string>

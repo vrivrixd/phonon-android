@@ -33,6 +33,24 @@ class AudioPipelineTest {
         return rises / duration(pcm)
     }
 
+    @Test fun theDecoderClickAndTheSilenceAfterItAreDropped() {
+        // As the model delivers it: a decaying burst in the first milliseconds, silence, then speech.
+        val rate = AudioPipeline.SAMPLE_RATE
+        val utterance = FloatArray(rate) { i ->
+            when {
+                i < rate / 100 -> 0.01f * (1 - i / (rate / 100f))
+                i < rate / 4 -> 0f
+                else -> 0.5f * sin(2 * PI * 200 * i / rate).toFloat()
+            }
+        }
+        val bytes = AudioPipeline(1f, 1f).process(utterance) + AudioPipeline(1f, 1f).finish()
+        val samples = bytes.size / 2
+        // Speech (3/4 s) plus at most the 20 ms kept before it: the burst and the silence are gone.
+        assertTrue("kept $samples samples", samples in (rate * 3 / 4)..(rate * 3 / 4 + rate / 50))
+        val first = ((bytes[0].toInt() and 0xff) or (bytes[1].toInt() shl 8)).toShort()
+        assertEquals(0, first.toInt())
+    }
+
     @Test fun normalSpeedKeepsTheAudio() {
         assertEquals(seconds.toDouble(), duration(render(1f, 1f)), 0.01)
     }
