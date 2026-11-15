@@ -50,6 +50,15 @@ class PhononTTS(modelDir: String, lang: String) : AutoCloseable {
     }
 
     fun setVoice(name: String) = check(lib.ptts_set_voice(open(), name))
+
+    private val added = HashSet<String>()
+
+    /** Load the voice file at [path] as [name], once: voices added after the model loaded. */
+    fun ensureVoice(name: String, path: String) {
+        if (name in added) return
+        check(lib.ptts_add_voice(open(), name, path))
+        added += name
+    }
     fun setLanguage(lang: String) = check(lib.ptts_set_language(open(), lang))
     fun setTemperature(temperature: Float) = check(lib.ptts_set_temperature(open(), temperature))
 
@@ -96,6 +105,7 @@ class PhononTTS(modelDir: String, lang: String) : AutoCloseable {
         fun ptts_speak(h: Pointer, text: String, cb: FrameFn, user: Pointer?, out: Result): Byte
         fun ptts_voices(h: Pointer): Pointer
         fun ptts_set_voice(h: Pointer, name: String): Byte
+        fun ptts_add_voice(h: Pointer, name: String, path: String): Byte
         fun ptts_set_language(h: Pointer, lang: String): Byte
         fun ptts_languages(h: Pointer): Pointer
         fun ptts_set_temperature(h: Pointer, temperature: Float): Byte

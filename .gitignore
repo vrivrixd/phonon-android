@@ -2,3 +2,5 @@ signing-key/
 *.p12
 *.keystore
 *.pem
+# Voice files before they go to the private voices repository.
+novas vozes/

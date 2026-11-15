@@ -27,6 +27,8 @@ class SettingsActivity : Activity() {
     private lateinit var column: LinearLayout
     private lateinit var batteryButton: Button
     private lateinit var updates: UpdateManager
+    private lateinit var voiceManager: VoiceManager
+    private val voiceRows = ArrayList<VoiceRow>()
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     private var pad = 0
@@ -51,7 +53,9 @@ class SettingsActivity : Activity() {
 
         heading(R.string.default_voices)
         text(getString(R.string.default_voices_help))
-        for (lang in Voices.languagesFor(Locale.getDefault().language)) voiceRow(lang)
+        for (lang in Voices.languagesFor(Locale.getDefault().language)) voiceRows += VoiceRow(lang)
+        voiceManager = VoiceManager(this, ::speakVoice) { voiceRows.forEach { it.reload() } }
+        button(getString(R.string.manage_voices)) { voiceManager.show() }
 
         heading(R.string.speech)
         val boosts = listOf(1.0f, 1.25f, 1.5f, 1.75f, 2.0f, 2.5f, 3.0f)
@@ -98,6 +102,7 @@ class SettingsActivity : Activity() {
 
         heading(R.string.about)
         text(getString(R.string.about_text, packageManager.getPackageInfo(packageName, 0).versionName))
+        if (Voices.hasContributed(this)) text(getString(R.string.about_contributed))
 
         connect()
         updates = UpdateManager(this)
@@ -176,29 +181,51 @@ class SettingsActivity : Activity() {
         status.postDelayed(reconnect, 1000)
     }
 
-    private fun voiceRow(lang: String) {
-        val display = Locale.getDefault()
-        val voices = Voices.forLanguage(this, lang)
-        val current = Voices.defaultFor(this, lang, "")
-        val labels = voices.map { v ->
-            val region = if (v.character) getString(R.string.character_voice) else v.locale.getDisplayCountry(display)
-            "${v.name} ($region)"
+    /** One language's default voice, with a button to hear it. Reloads when voices are added or removed. */
+    private inner class VoiceRow(private val lang: String) {
+        private var voices = Voices.forLanguage(this@SettingsActivity, lang)
+        private val spinner: Spinner
+
+        init {
+            val display = Locale.getDefault()
+            val langName = Locale(lang).getDisplayLanguage(display).replaceFirstChar { it.titlecase(display) }
+            spinner = choice(langName, labels(), selected()) { position ->
+                voices.getOrNull(position)?.let { Prefs.setDefaultVoice(this@SettingsActivity, lang, it.id) }
+            }
+            button(getString(R.string.listen_default, langName)) {
+                Voices.defaultFor(this@SettingsActivity, lang, "")?.let { speakVoice(it) }
+            }
         }
-        val langName = Locale(lang).getDisplayLanguage(display).replaceFirstChar { it.titlecase(display) }
-        choice(langName, labels, voices.indexOf(current).coerceAtLeast(0)) { Prefs.setDefaultVoice(this, lang, voices[it].name) }
-        button(getString(R.string.listen_default, langName)) { speakSample(lang) }
+
+        fun reload() {
+            voices = Voices.forLanguage(this@SettingsActivity, lang)
+            spinner.adapter = ArrayAdapter(this@SettingsActivity, android.R.layout.simple_spinner_dropdown_item, labels())
+            spinner.setSelection(selected(), false)
+        }
+
+        private fun selected() = voices.indexOf(Voices.defaultFor(this@SettingsActivity, lang, "")).coerceAtLeast(0)
+
+        private fun labels() = voices.map { v ->
+            val region = if (v.character) getString(R.string.character_voice) else v.locale.getDisplayCountry(Locale.getDefault())
+            if (v.imported) "${v.name} ($region, ${getString(R.string.added_voice)})" else "${v.name} ($region)"
+        }
     }
 
-    private fun speakSample(lang: String) {
+    /** Speak the sample sentence of [voice]'s language in that voice. */
+    private fun speakVoice(voice: CatalogVoice) {
         val engine = tts
         if (engine == null || !ttsReady) {
             status.text = getString(R.string.engine_starting)
             return
         }
-        val voice = Voices.defaultFor(this, lang, "") ?: return
-        val sample = DataActivity.SAMPLES[lang] ?: return
+        val sample = DataActivity.SAMPLES[voice.lang] ?: return
         engine.voices?.firstOrNull { it.name == voice.androidName }?.let { engine.voice = it }
         engine.speak(sample, TextToSpeech.QUEUE_FLUSH, null, "sample")
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        voiceManager.onActivityResult(requestCode, resultCode, data)
     }
 
     private fun heading(label: Int) = TextView(this).apply {
@@ -221,7 +248,7 @@ class SettingsActivity : Activity() {
         column.addView(this, MATCH_PARENT, WRAP_CONTENT)
     }
 
-    private fun choice(label: String, options: List<String>, selected: Int, onChange: (Int) -> Unit) {
+    private fun choice(label: String, options: List<String>, selected: Int, onChange: (Int) -> Unit): Spinner {
         val title = TextView(this).apply { text = label; setPadding(0, pad / 2, 0, 0) }
         val spinner = Spinner(this).apply {
             id = View.generateViewId()
@@ -235,6 +262,7 @@ class SettingsActivity : Activity() {
         title.labelFor = spinner.id
         column.addView(title, MATCH_PARENT, WRAP_CONTENT)
         column.addView(spinner, MATCH_PARENT, WRAP_CONTENT)
+        return spinner
     }
 
     private fun fmt(v: Float): String {

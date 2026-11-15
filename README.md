@@ -6,6 +6,8 @@ with **TalkBack** and every app that speaks through Android's text-to-speech API
 
 - The `phonon-40m-multilingual` model and the catalog's 102 voices are **bundled in the APK**:
   nothing to download.
+- Eight more Portuguese (Brazil) voices, contributed by volunteers for this app only (see Licenses).
+- Extra voices: add your own Phonon voice files (`.safetensors`), rename them or delete them.
 - Languages: Portuguese (Brazil), English (UK, US and character voices), Spanish (Spain and
   Mexico), French and German.
 - The system and TalkBack speech rate and pitch work (through Sonic), plus an optional extra
@@ -63,6 +65,10 @@ APK is signed with a throwaway key, and updates no longer install over the previ
 - **Model `gradium/phonon-40m-multilingual`: CC BY-NC 4.0, non-commercial use only.** This app
   may not be sold or used commercially while it ships that model.
 - Voices `gradium/phonon-voices`: Apache 2.0.
+- **The contributed Portuguese voices: all rights reserved, for use in this app only**
+  (`licenses/CONTRIBUTED-VOICES.txt`). The MIT license above does not cover them. They are kept in
+  a private repository and bundled only in official builds; a build from a fork has the other
+  voices but not these.
 - Sonic (Bill Cox), used for speed and pitch: Apache 2.0.
 - Emoji names from [Unicode CLDR](https://cldr.unicode.org/) (`scripts/generate-emoji-tables.py`):
   Unicode License v3.

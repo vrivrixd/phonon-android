@@ -1,0 +1,74 @@
+diff --git a/ptts-ffi/include/ptts.h b/ptts-ffi/include/ptts.h
+index 66ed6aa..b84e8de 100644
+--- a/ptts-ffi/include/ptts.h
++++ b/ptts-ffi/include/ptts.h
+@@ -37,6 +37,8 @@ bool ptts_speak(PttsHandle *h, const char *text, PttsFrameFn cb, void *user, Ptt
+ /// NUL-separated voice names, ending in a second NUL. Borrowed.
+ const char *ptts_voices(const PttsHandle *h);
+ bool ptts_set_voice(PttsHandle *h, const char *name);
++/// Load a voice file as `name` without reloading the model. Not on Apple.
++bool ptts_add_voice(PttsHandle *h, const char *name, const char *path);
+ /// Normalize text as `lang` (a code ptts_new takes, or none) from the next ptts_speak on, with no reload.
+ bool ptts_set_language(PttsHandle *h, const char *lang);
+ /// The languages the model was trained for, NUL-separated like ptts_voices. Borrowed.
+diff --git a/ptts-ffi/src/cpu.rs b/ptts-ffi/src/cpu.rs
+index d250337..db62845 100644
+--- a/ptts-ffi/src/cpu.rs
++++ b/ptts-ffi/src/cpu.rs
+@@ -72,6 +72,16 @@ impl Engine {
+         &self.voices
+     }
+ 
++    /// Load a voice file after the model, replacing any voice of the same name.
++    pub fn add_voice(&mut self, name: &str, path: &Path) -> Result<(), String> {
++        use ptts::synth::SynthApi;
++        self.synth.add_voice_file(name, path).map_err(|e| e.to_string())?;
++        if !self.voices.iter().any(|known| known == name) {
++            self.voices.push(name.to_string());
++        }
++        Ok(())
++    }
++
+     pub fn languages(&self) -> &[String] {
+         &self.languages
+     }
+diff --git a/ptts-ffi/src/lib.rs b/ptts-ffi/src/lib.rs
+index ab05b91..62177ba 100644
+--- a/ptts-ffi/src/lib.rs
++++ b/ptts-ffi/src/lib.rs
+@@ -193,6 +193,35 @@ pub unsafe extern "C" fn ptts_set_voice(h: *mut PttsHandle, name: *const c_char)
+     }
+ }
+ 
++/// Load the voice file at `path` (a voice embedding, `*.safetensors`) as `name`, replacing any
++/// voice of that name, so voices can be added without reloading the model. Returns false on
++/// failure; see `ptts_last_error`. Not on Apple, whose bundles carry their voices.
++///
++/// # Safety
++/// `h` must come from `ptts_new`; `name` and `path` must be NUL-terminated UTF-8.
++#[cfg(not(target_vendor = "apple"))]
++#[unsafe(no_mangle)]
++pub unsafe extern "C" fn ptts_add_voice(
++    h: *mut PttsHandle,
++    name: *const c_char,
++    path: *const c_char,
++) -> bool {
++    let h = unsafe { &mut *h };
++    let name = unsafe { CStr::from_ptr(name) }.to_string_lossy().to_string();
++    let path = unsafe { CStr::from_ptr(path) }.to_string_lossy().to_string();
++    let r = guarded(|| h.engine.add_voice(&name, Path::new(&path)));
++    match r {
++        Ok(()) => {
++            h.voice_blob = nul_separated(h.engine.voices());
++            true
++        }
++        Err(e) => {
++            h.last_error = Some(c_string(&e));
++            false
++        }
++    }
++}
++
+ /// Normalize text as `lang` (a code `ptts_new` takes, or `none`) from the next `ptts_speak`
+ /// on, as `ptts_new` does: switching languages needs no reload. Returns false on failure; see
+ /// `ptts_last_error`.

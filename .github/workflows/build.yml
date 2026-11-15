@@ -27,7 +27,9 @@ env:
   # Gradium's Phonon runtime, pinned to the commit this app was written against.
   UPSTREAM_REPO: gradium-ai/xn-ptts
   UPSTREAM_REF: e5110afd3ead725c940b6411eec4985fb8b111aa
-  # The model and voices, kept as an asset of a release in this repo (too big for git).
+  # The model and voices, kept as an asset of a release of the main repository (too big for git).
+  # Named outright so forks, which lack that release, build too.
+  MODEL_PACK_REPO: vrivrixd/phonon-android
   MODEL_PACK_TAG: model-pack
   MODEL_PACK_ASSET: phonon-40m-multilingual-pack.zip
 
@@ -35,6 +37,10 @@ jobs:
   apk:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    env:
+      # Voices contributed for this app only, kept in a private repository (licenses/CONTRIBUTED-VOICES.txt).
+      # Forks get no secrets, so they build without them.
+      HAS_VOICES_KEY: ${{ secrets.VOICES_DEPLOY_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -82,8 +88,25 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download "$MODEL_PACK_TAG" -R "$GITHUB_REPOSITORY" -p "$MODEL_PACK_ASSET" -D pack
+          gh release download "$MODEL_PACK_TAG" -R "$MODEL_PACK_REPO" -p "$MODEL_PACK_ASSET" -D pack
           unzip -q "pack/$MODEL_PACK_ASSET" -d pack/full
+
+      - name: Check out the contributed voices
+        if: env.HAS_VOICES_KEY == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: vrivrixd/phonon-voices
+          ssh-key: ${{ secrets.VOICES_DEPLOY_KEY }}
+          path: contributed
+
+      - name: Add the contributed voices to the model's voices
+        if: env.HAS_VOICES_KEY == 'true'
+        run: |
+          for f in contributed/voices/*.safetensors; do
+            if [ -e "pack/full/voices/$(basename "$f")" ]; then echo "::error::$(basename "$f") is already a catalog voice"; exit 1; fi
+            cp "$f" pack/full/voices/
+          done
+          ls contributed/voices
 
       - name: Build the host tools (quantizer and ptts command line)
         working-directory: upstream
@@ -112,7 +135,13 @@ jobs:
           done
           $PTTS -m pack/q8 --quant q8_0 --device cpu -t 0.8 --lang en -v Freya -o "$OUT/q8-Freya.wav" "$EN" || ok_q8=1
           $PTTS -m pack/st --device cpu -t 0.8 --lang pt -v Davi -o "$OUT/f32-Davi.wav" "$PT" || ok_st=1
+          ok_c=0
+          for f in contributed/voices/*.safetensors; do
+            [ -e "$f" ] || continue
+            $PTTS -m pack/q8 --quant q8_0 --device cpu -t 0.8 --lang pt -v "$(basename "$f" .safetensors)" -o "$OUT/c-$(basename "$f" .safetensors).wav" "$PT" || ok_c=1
+          done
           ls -la "$OUT"; rm -rf "$OUT"
+          if [ $ok_c != 0 ]; then echo "::error::a contributed voice does not synthesize"; exit 1; fi
           if [ $ok_q8 = 0 ]; then echo "weights=q8" >> "$GITHUB_OUTPUT";
           elif [ $ok_st = 0 ]; then echo "weights=st" >> "$GITHUB_OUTPUT"; echo "::warning::q8 failed, shipping safetensors";
           else echo "::error::neither weight format synthesizes"; exit 1; fi
@@ -128,8 +157,14 @@ jobs:
           D=android/model-assets/model
           rm -rf android/model-assets; mkdir -p "$D"
           cp -r "pack/$W/." "$D/"
-          echo "$(sha256sum "pack/$MODEL_PACK_ASSET" | cut -c1-16)-$W-${UPSTREAM_REF:0:12}" > "$D/PACK_VERSION"
+          # Any change to the model, the runtime or the voices makes the app copy the model out again.
+          VOICES=$(cat "$D"/voices/*.safetensors | sha256sum | cut -c1-12)
+          echo "$(sha256sum "pack/$MODEL_PACK_ASSET" | cut -c1-16)-$W-${UPSTREAM_REF:0:12}-$VOICES" > "$D/PACK_VERSION"
           cat "$D/PACK_VERSION"; du -sh "$D"
+          if [ -d contributed ]; then
+            cp contributed/voices.json android/model-assets/contributed-voices.json
+            cp contributed/LICENSE android/model-assets/contributed-voices-license.txt
+          fi
 
       - name: Signing key
         env:

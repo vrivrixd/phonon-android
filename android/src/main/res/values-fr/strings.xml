@@ -41,4 +41,20 @@
     <string name="update_permission_action">Ouvrir les paramètres</string>
     <string name="speech_channel">Voix</string>
     <string name="speech_notification">Génération de la voix</string>
+    <string name="manage_voices">Gérer les voix supplémentaires</string>
+    <string name="manage_title">Voix supplémentaires</string>
+    <string name="navigate_up">Remonter</string>
+    <string name="add_voice">Ajouter une voix</string>
+    <string name="no_extra_voices">Aucune voix supplémentaire pour l\'instant. Utilisez Ajouter une voix pour choisir un fichier de voix Phonon (.safetensors).</string>
+    <string name="rename">Renommer</string>
+    <string name="delete">Supprimer</string>
+    <string name="delete_confirm">Supprimer la voix %1$s ?</string>
+    <string name="voice_name">Nom de la voix</string>
+    <string name="voice_language">Langue parlée par cette voix</string>
+    <string name="invalid_voice">Ce fichier n\'est pas une voix Phonon.</string>
+    <string name="name_taken">Une voix porte déjà ce nom.</string>
+    <string name="name_invalid">Saisissez un nom de 80 caractères au plus.</string>
+    <string name="too_many_voices">Vous pouvez ajouter jusqu\'à 64 voix.</string>
+    <string name="added_voice">ajoutée</string>
+    <string name="about_contributed">Certaines voix portugaises ont été offertes par des bénévoles pour cette application uniquement. Tous les droits sont réservés : elles ne peuvent pas être extraites ni utilisées ailleurs.</string>
 </resources>

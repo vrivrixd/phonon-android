@@ -1,0 +1,22 @@
+Contributed voices for Phonon for Android
+
+Copyright (c) the individuals who contributed their voices. All rights reserved.
+
+These voice files ("the Voices") were contributed by volunteers for use in
+Phonon for Android only, as built and distributed by its author. The
+contributors keep all rights to their Voices.
+
+You may use the Voices only through Phonon for Android, as distributed in its
+official releases.
+
+You may not, without written permission:
+- extract, copy or redistribute the Voices, alone or as part of other work;
+- modify the Voices, or make other voices or models from them;
+- use the Voices in any other software, service or product;
+- use the Voices for any commercial purpose.
+
+The MIT license of this app's source code does not apply to the Voices.
+
+THE VOICES ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. IN NO EVENT
+SHALL THE CONTRIBUTORS OR THE AUTHOR BE LIABLE FOR ANY CLAIM ARISING FROM
+THE USE OF THE VOICES.

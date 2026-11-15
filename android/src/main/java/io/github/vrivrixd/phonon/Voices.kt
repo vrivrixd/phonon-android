@@ -4,13 +4,27 @@ import android.content.Context
 import org.json.JSONArray
 import java.util.Locale
 
-/** One catalog voice and the locale it speaks. Read from assets/voices.json, no model needed. */
-data class CatalogVoice(val name: String, val locale: Locale, val character: Boolean) {
+/**
+ * One voice and the locale it speaks: from the catalog (assets/voices.json), contributed for this
+ * app (assets/contributed-voices.json, present in official builds only), or added by the person
+ * ([ImportedVoices]). None of this needs the model.
+ *
+ * @param name what is shown.
+ * @param id what the runtime and Android know it by: the name for bundled voices, a fixed id for
+ *   added ones, so renaming them changes nothing that apps remember.
+ */
+data class CatalogVoice(
+    val name: String,
+    val locale: Locale,
+    val character: Boolean,
+    val id: String = name,
+    val imported: Boolean = false,
+) {
     /** The runtime's language code for text normalization. */
     val lang: String get() = locale.language
 
-    /** The Android voice name, unique across the catalog. */
-    val androidName: String get() = "${locale.toLanguageTag()}-x-${name}"
+    /** The Android voice name, unique across all voices. */
+    val androidName: String get() = "${locale.toLanguageTag()}-x-${id}"
 }
 
 object Voices {
@@ -25,15 +39,23 @@ object Voices {
         (listOf(if (system in LANGUAGES) system else FALLBACK_LANGUAGE, FALLBACK_LANGUAGE) + LANGUAGES).distinct()
 
     private const val DEFAULT_SUFFIX = "-x-default"
+    private const val CONTRIBUTED = "contributed-voices.json"
 
     @Volatile private var cached: List<CatalogVoice>? = null
 
-    fun all(context: Context): List<CatalogVoice> = cached ?: synchronized(this) {
-        cached ?: load(context).also { cached = it }
+    /** Every voice: the bundled ones, then the ones the person added. */
+    fun all(context: Context): List<CatalogVoice> = catalog(context) + ImportedVoices.list(context)
+
+    private fun catalog(context: Context): List<CatalogVoice> = cached ?: synchronized(this) {
+        cached ?: (read(context, "voices.json").orEmpty() + read(context, CONTRIBUTED).orEmpty()).also { cached = it }
     }
 
-    private fun load(context: Context): List<CatalogVoice> {
-        val text = context.assets.open("voices.json").use { it.readBytes().toString(Charsets.UTF_8) }
+    private fun read(context: Context, asset: String): List<CatalogVoice>? {
+        val text = try {
+            context.assets.open(asset).use { it.readBytes().toString(Charsets.UTF_8) }
+        } catch (e: java.io.IOException) {
+            return null
+        }
         val array = JSONArray(text)
         return (0 until array.length()).map {
             val o = array.getJSONObject(it)
@@ -41,14 +63,20 @@ object Voices {
         }
     }
 
+    /** Whether this build carries the voices contributed for it. */
+    fun hasContributed(context: Context): Boolean = read(context, CONTRIBUTED) != null
+
+    /** The regional locales of the bundled voices, the ones an added voice can speak. */
+    fun catalogLocales(context: Context): List<Locale> =
+        catalog(context).filter { !it.character }.map { it.locale }.distinct()
+
     /**
      * The default voices, one per regional locale: what Android hands to apps that ask for a
      * language. Apps keep the name they got and send it with every request, so a real voice's name
      * here would freeze the choice until they reconnect. These stand for "whichever voice the
      * settings name right now", and a voice an app picks by its real name stays honoured.
      */
-    fun defaultVoiceLocales(context: Context): List<Locale> =
-        all(context).filter { !it.character }.map { it.locale }.distinct()
+    fun defaultVoiceLocales(context: Context): List<Locale> = catalogLocales(context)
 
     fun defaultVoiceName(locale: Locale): String = "${locale.toLanguageTag()}$DEFAULT_SUFFIX"
 
@@ -61,9 +89,6 @@ object Voices {
 
     fun byAndroidName(context: Context, name: String?): CatalogVoice? =
         name?.let { n -> all(context).firstOrNull { it.androidName == n } }
-
-    fun byName(context: Context, name: String?): CatalogVoice? =
-        name?.let { n -> all(context).firstOrNull { it.name == n } }
 
     /** A language as Android names it (two or three letters) to one of [LANGUAGES], or null. */
     fun code(language: String?): String? {
@@ -93,9 +118,9 @@ object Voices {
         } ?: ""
     }
 
-    /** The voices offered for a language, regional ones first, then the character voices. */
+    /** The voices offered for a language: regional ones first, then character voices, then added ones. */
     fun forLanguage(context: Context, lang: String): List<CatalogVoice> =
-        all(context).filter { it.lang == lang }.sortedBy { it.character }
+        all(context).filter { it.lang == lang }.sortedBy { if (it.imported) 2 else if (it.character) 1 else 0 }
 
     /**
      * The voice to speak [lang] (and [country], if given) when a request names none: the user's
@@ -103,7 +128,7 @@ object Voices {
      */
     fun defaultFor(context: Context, lang: String, country: String): CatalogVoice? {
         val candidates = forLanguage(context, lang)
-        Prefs.defaultVoice(context, lang)?.let { chosen -> candidates.firstOrNull { it.name == chosen }?.let { return it } }
+        Prefs.defaultVoice(context, lang)?.let { chosen -> candidates.firstOrNull { it.id == chosen }?.let { return it } }
         return candidates.firstOrNull { !it.character && it.locale.country == country }
             ?: candidates.firstOrNull { !it.character }
             ?: candidates.firstOrNull()

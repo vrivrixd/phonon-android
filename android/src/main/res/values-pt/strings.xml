@@ -41,4 +41,20 @@
     <string name="update_permission_action">Abrir configurações</string>
     <string name="speech_channel">Fala</string>
     <string name="speech_notification">Gerando a fala</string>
+    <string name="manage_voices">Gerenciar vozes extras</string>
+    <string name="manage_title">Vozes extras</string>
+    <string name="navigate_up">Navegar para cima</string>
+    <string name="add_voice">Adicionar voz</string>
+    <string name="no_extra_voices">Nenhuma voz extra ainda. Use Adicionar voz para escolher um arquivo de voz do Phonon (.safetensors).</string>
+    <string name="rename">Renomear</string>
+    <string name="delete">Excluir</string>
+    <string name="delete_confirm">Excluir a voz %1$s?</string>
+    <string name="voice_name">Nome da voz</string>
+    <string name="voice_language">Idioma que esta voz fala</string>
+    <string name="invalid_voice">Este arquivo não é uma voz do Phonon.</string>
+    <string name="name_taken">Já existe uma voz com este nome.</string>
+    <string name="name_invalid">Digite um nome de até 80 caracteres.</string>
+    <string name="too_many_voices">Você pode adicionar até 64 vozes.</string>
+    <string name="added_voice">adicionada</string>
+    <string name="about_contributed">Algumas vozes em português foram cedidas por voluntários apenas para este app. Todos os direitos sobre elas são reservados: não podem ser extraídas nem usadas em outro lugar.</string>
 </resources>

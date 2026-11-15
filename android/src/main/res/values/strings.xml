@@ -44,4 +44,20 @@
     <string name="update_percent" translatable="false">%1$d%%</string>
     <string name="speech_channel">Speech</string>
     <string name="speech_notification">Making speech</string>
+    <string name="manage_voices">Manage extra voices</string>
+    <string name="manage_title">Extra voices</string>
+    <string name="navigate_up">Navigate up</string>
+    <string name="add_voice">Add voice</string>
+    <string name="no_extra_voices">No extra voices yet. Use Add voice to choose a Phonon voice file (.safetensors).</string>
+    <string name="rename">Rename</string>
+    <string name="delete">Delete</string>
+    <string name="delete_confirm">Delete the voice %1$s?</string>
+    <string name="voice_name">Voice name</string>
+    <string name="voice_language">Language this voice speaks</string>
+    <string name="invalid_voice">This file is not a Phonon voice.</string>
+    <string name="name_taken">There is already a voice with this name.</string>
+    <string name="name_invalid">Enter a name of up to 80 characters.</string>
+    <string name="too_many_voices">You can add up to 64 voices.</string>
+    <string name="added_voice">added</string>
+    <string name="about_contributed">Some Portuguese voices were contributed by volunteers for this app only. All rights to them are reserved: they may not be extracted or used elsewhere.</string>
 </resources>

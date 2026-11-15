@@ -143,7 +143,7 @@ class PhononService : TextToSpeechService() {
                 var ok = true
                 synchronized(tts) {
                     tts.setLanguage(voice.lang)
-                    tts.setVoice(voice.name)
+                    tts.setVoice(runtimeName(tts, voice))
                     val temperature = Prefs.temperature(this)
                     tts.setTemperature(if (temperature >= 0f) temperature else MODEL_TEMPERATURE)
                     var first = true
@@ -199,6 +199,18 @@ class PhononService : TextToSpeechService() {
             fail(callback, TextToSpeech.ERROR_SYNTHESIS)
         } else {
             callback.done()
+        }
+    }
+
+    /** The runtime's name for [voice], loading an added voice the first time it speaks. */
+    private fun runtimeName(tts: PhononTTS, voice: CatalogVoice): String {
+        if (!voice.imported) return voice.id
+        return try {
+            tts.ensureVoice(voice.id, ImportedVoices.file(this, voice.id).path)
+            voice.id
+        } catch (e: Exception) {
+            Log.w(TAG, "could not load the added voice ${voice.name}", e)
+            Voices.forLanguage(this, voice.lang).firstOrNull { !it.imported }?.id ?: voice.id
         }
     }
 

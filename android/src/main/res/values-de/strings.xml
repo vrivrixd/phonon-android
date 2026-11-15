@@ -41,4 +41,20 @@
     <string name="update_permission_action">Einstellungen öffnen</string>
     <string name="speech_channel">Sprache</string>
     <string name="speech_notification">Sprache wird erzeugt</string>
+    <string name="manage_voices">Zusätzliche Stimmen verwalten</string>
+    <string name="manage_title">Zusätzliche Stimmen</string>
+    <string name="navigate_up">Nach oben</string>
+    <string name="add_voice">Stimme hinzufügen</string>
+    <string name="no_extra_voices">Noch keine zusätzlichen Stimmen. Wähle mit Stimme hinzufügen eine Phonon-Stimmdatei (.safetensors).</string>
+    <string name="rename">Umbenennen</string>
+    <string name="delete">Löschen</string>
+    <string name="delete_confirm">Die Stimme %1$s löschen?</string>
+    <string name="voice_name">Name der Stimme</string>
+    <string name="voice_language">Sprache dieser Stimme</string>
+    <string name="invalid_voice">Diese Datei ist keine Phonon-Stimme.</string>
+    <string name="name_taken">Es gibt bereits eine Stimme mit diesem Namen.</string>
+    <string name="name_invalid">Gib einen Namen mit bis zu 80 Zeichen ein.</string>
+    <string name="too_many_voices">Du kannst bis zu 64 Stimmen hinzufügen.</string>
+    <string name="added_voice">hinzugefügt</string>
+    <string name="about_contributed">Einige portugiesische Stimmen wurden von Freiwilligen nur für diese App zur Verfügung gestellt. Alle Rechte daran sind vorbehalten: Sie dürfen weder extrahiert noch anderswo verwendet werden.</string>
 </resources>
